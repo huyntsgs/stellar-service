@@ -7,9 +7,9 @@ import (
 	"github.com/pkg/errors"
 )
 
-// GetXLM makes an API call to the stellar friendbot, which gives 10000 testnet XLM
-func GetXLM(PublicKey string) error {
-	if Mainnet {
+// FundXLMTestNet makes an API call to the stellar friendbot, which gives 10000 testnet XLM
+func FundXLMTestNet(PublicKey string) error {
+	if IsMainNet {
 		return errors.New("no friendbot on mainnet, quitting")
 	}
 	resp, err := http.Get("https://friendbot.stellar.org/?addr=" + PublicKey)

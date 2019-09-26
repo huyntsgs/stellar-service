@@ -6,9 +6,15 @@ import (
 
 	utils "github.com/Varunram/essentials/utils"
 	xlm "github.com/huyntsgs/stellar-service"
-	"github.com/stellar/go/network"
+
+	//"github.com/stellar/go/network"
 	build "github.com/stellar/go/txnbuild"
 )
+
+type Asset struct {
+	Code          string
+	IssuerAddress string
+}
 
 // AssetID generates a new stellar compatible asset
 func AssetID(inputString string) string {
@@ -27,12 +33,7 @@ func CreateAsset(assetName string, PublicKey string) build.Asset {
 // preset limit on how much it is willing to trust the issuer
 func TrustAsset(assetCode string, assetIssuer string, limitx float64, seed string) (string, error) {
 	// TRUST is FROM Seed TO assetIssuer
-	var passphrase string
-	if xlm.Mainnet {
-		passphrase = network.PublicNetworkPassphrase
-	} else {
-		passphrase = network.TestNetworkPassphrase
-	}
+	passphrase := xlm.Passphrase
 
 	sourceAccount, mykp, err := xlm.ReturnSourceAccount(seed)
 	if err != nil {
@@ -69,12 +70,7 @@ func TrustAsset(assetCode string, assetIssuer string, limitx float64, seed strin
 // SendAssetFromIssuer transfers an asset from the issuer to the desired publickey.
 func SendAssetFromIssuer(assetCode string, destination string, amountx float64,
 	seed string, issuerPubkey string) (int32, string, error) {
-	var passphrase string
-	if xlm.Mainnet {
-		passphrase = network.PublicNetworkPassphrase
-	} else {
-		passphrase = network.TestNetworkPassphrase
-	}
+	passphrase := xlm.Passphrase
 
 	sourceAccount, mykp, err := xlm.ReturnSourceAccount(seed)
 	if err != nil {
@@ -105,12 +101,8 @@ func SendAssetFromIssuer(assetCode string, destination string, amountx float64,
 // SendAssetToIssuer sends an asset back to the issuer
 func SendAssetToIssuer(assetCode string, destination string, amountx float64,
 	seed string) (int32, string, error) {
-	var passphrase string
-	if xlm.Mainnet {
-		passphrase = network.PublicNetworkPassphrase
-	} else {
-		passphrase = network.TestNetworkPassphrase
-	}
+
+	passphrase := xlm.Passphrase
 
 	sourceAccount, mykp, err := xlm.ReturnSourceAccount(seed)
 	if err != nil {
@@ -139,16 +131,11 @@ func SendAssetToIssuer(assetCode string, destination string, amountx float64,
 }
 
 // SendAsset sends an asset to a destination which has an established trustline with the issuer
-func SendAsset(assetCode string, issuerPubkey string, destination string, amountx float64,
-	seed string, memo string) (int32, string, error) {
-	var passphrase string
-	if xlm.Mainnet {
-		passphrase = network.PublicNetworkPassphrase
-	} else {
-		passphrase = network.TestNetworkPassphrase
-	}
+func SendAsset(asset Asset, destination string, amountx float64,
+	senderSeed string, memo string) (int32, string, error) {
+	passphrase := xlm.Passphrase
 
-	sourceAccount, mykp, err := xlm.ReturnSourceAccount(seed)
+	sourceAccount, mykp, err := xlm.ReturnSourceAccount(senderSeed)
 	if err != nil {
 		return -1, "", err
 	}
@@ -161,7 +148,7 @@ func SendAsset(assetCode string, issuerPubkey string, destination string, amount
 	op := build.Payment{
 		Destination: destination,
 		Amount:      amount,
-		Asset:       build.CreditAsset{assetCode, issuerPubkey},
+		Asset:       build.CreditAsset{asset.Code, asset.IssuerAddress},
 	}
 
 	tx := build.Transaction{

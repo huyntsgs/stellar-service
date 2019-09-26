@@ -42,7 +42,7 @@ func SendTx(mykp keypair.KP, tx build.Transaction) (int32, string, error) {
 		return -1, "", errors.Wrap(err, "could not build/sign/encode")
 	}
 
-	resp, err := TestNetClient.SubmitTransactionXDR(txe)
+	resp, err := HorizonNetClient.SubmitTransactionXDR(txe)
 	if err != nil {
 		log.Println("SubmitTransactionXDR err:", err)
 		return -1, "", errors.Wrap(err, "could not submit tx to horizon")
@@ -87,12 +87,7 @@ func ReturnSourceAccount(seed string) (horizonprotocol.Account, keypair.KP, erro
 	if err != nil {
 		return sourceAccount, mykp, errors.Wrap(err, "could not parse keypair, quitting")
 	}
-	var client *horizon.Client
-	if Mainnet {
-		client = horizon.DefaultPublicNetClient
-	} else {
-		client = horizon.DefaultTestNetClient
-	}
+	client := getHorizonClient(IsMainNet)
 	ar := horizon.AccountRequest{AccountID: mykp.Address()}
 	sourceAccount, err = client.AccountDetail(ar)
 	if err != nil {
@@ -104,12 +99,7 @@ func ReturnSourceAccount(seed string) (horizonprotocol.Account, keypair.KP, erro
 
 // ReturnSourceAccountPubkey returns the source account of the pubkey
 func ReturnSourceAccountPubkey(pubkey string) (horizonprotocol.Account, error) {
-	var client *horizon.Client
-	if Mainnet {
-		client = horizon.DefaultPublicNetClient
-	} else {
-		client = horizon.DefaultTestNetClient
-	}
+	client := getHorizonClient(IsMainNet)
 	ar := horizon.AccountRequest{AccountID: pubkey}
 	sourceAccount, err := client.AccountDetail(ar)
 	if err != nil {
@@ -149,9 +139,17 @@ func SendXLM(destination string, amountx float64, seed string, memo string) (int
 	return SendTx(mykp, tx)
 }
 
+func getHorizonClient(isMainNet bool) *horizon.Client {
+	if isMainNet {
+		return horizon.DefaultPublicNetClient
+	} else {
+		return horizon.DefaultTestNetClient
+	}
+}
+
 // RefillAccount refills an account
 func RefillAccount(publicKey string, refillSeed string) error {
-	if Mainnet {
+	if IsMainNet {
 		return errors.New("can't give free xlm on mainnet, quitting")
 	}
 	var err error

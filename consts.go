@@ -16,11 +16,15 @@ var (
 	// Mainnet is a bool which decides which chain to connect to
 	IsMainNet bool
 	// TestNetClient defines the horizon client to connect to
-	HorizonNetClient *horizon.Client
+	HorizonClient *horizon.Client
 )
 
 // RefillAmount defines the default stellar refill amount
 var RefillAmount float64
+
+func GetHorizonClient() *horizon.Client {
+	return HorizonClient
+}
 
 // SetConsts XLM consts
 func SetupParams(amount float64, isMainnet bool) {
@@ -30,14 +34,14 @@ func SetupParams(amount float64, isMainnet bool) {
 	if IsMainNet {
 		Passphrase = network.PublicNetworkPassphrase
 		log.Println("Pointing horizon to mainnet")
-		HorizonNetClient = &horizon.Client{
-			HorizonURL: "https://horizon.stellar.org/", // switch to mainnet horizon
+		HorizonClient = &horizon.Client{
+			HorizonURL: "https://horizon.stellar.org/",
 			HTTP:       http.DefaultClient,
 		}
 	} else {
 		log.Println("Pointing horizon to testnet")
 		Passphrase = network.TestNetworkPassphrase
-		HorizonNetClient = &horizon.Client{
+		HorizonClient = &horizon.Client{
 			HorizonURL: "https://horizon-testnet.stellar.org/",
 			HTTP:       http.DefaultClient,
 		}

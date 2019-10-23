@@ -52,7 +52,7 @@ func TrustAsset(assetCode string, assetIssuer string, limitx float64, seed strin
 		Limit: limit,
 	}
 
-	tx := build.Transaction{
+	tx := &build.Transaction{
 		SourceAccount: &sourceAccount,
 		Operations:    []build.Operation{&op},
 		Timebounds:    build.NewInfiniteTimeout(),
@@ -88,7 +88,7 @@ func SendAssetFromIssuer(assetCode string, destination string, amountx float64,
 		Asset:       build.CreditAsset{assetCode, issuerPubkey},
 	}
 
-	tx := build.Transaction{
+	tx := &build.Transaction{
 		SourceAccount: &sourceAccount,
 		Operations:    []build.Operation{&op},
 		Timebounds:    build.NewInfiniteTimeout(),
@@ -120,7 +120,7 @@ func SendAssetToIssuer(assetCode string, destination string, amountx float64,
 		Asset:       build.CreditAsset{assetCode, destination},
 	}
 
-	tx := build.Transaction{
+	tx := &build.Transaction{
 		SourceAccount: &sourceAccount,
 		Operations:    []build.Operation{&op},
 		Timebounds:    build.NewInfiniteTimeout(),
@@ -151,7 +151,7 @@ func SendAsset(asset Asset, destination string, amountx float64,
 		Asset:       build.CreditAsset{asset.Code, asset.IssuerAddress},
 	}
 
-	tx := build.Transaction{
+	tx := &build.Transaction{
 		SourceAccount: &sourceAccount,
 		Operations:    []build.Operation{&op},
 		Timebounds:    build.NewInfiniteTimeout(),

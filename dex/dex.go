@@ -35,7 +35,7 @@ func NewBuyOrder(seed string, assetName string, issuer string,
 		SourceAccount: &sourceAccount,
 		Operations:    []build.Operation{&buyOffer},
 		Timebounds:    build.NewInfiniteTimeout(),
-		Network:       network.TestNetworkPassphrase,
+		Network:       xlm.Passphrase,
 	}
 
 	// once the offer is completed, we need to send a follow up tx to send funds to the requested address
@@ -63,7 +63,7 @@ func NewSellOrder(seed string, assetName string, issuer string, amount string,
 		SourceAccount: &sourceAccount,
 		Operations:    []build.Operation{&sellOffer},
 		Timebounds:    build.NewInfiniteTimeout(),
-		Network:       network.TestNetworkPassphrase,
+		Network:       xlm.Passphrase,
 	}
 
 	return xlm.SendTx(mykp, tx)

@@ -21,7 +21,7 @@ func GetLedgerData(blockNumberx int) ([]byte, error) {
 		return data, err
 	}
 
-	resp, err := http.Get(HorizonNetClient.HorizonURL + "/ledgers/" + blockNumber)
+	resp, err := http.Get(HorizonClient.HorizonURL + "/ledgers/" + blockNumber)
 	if err != nil || resp.Status != "200 OK" {
 		return data, errors.New("API Request did not succeed")
 	}
@@ -54,7 +54,7 @@ func GetBlockHash(blockNumber int) (string, error) {
 
 // GetLatestBlockHash gets the lastest block hash
 func GetLatestBlockHash() (string, error) {
-	url := HorizonNetClient.HorizonURL + "/ledgers?cursor=now&order=desc&limit=1"
+	url := HorizonClient.HorizonURL + "/ledgers?cursor=now&order=desc&limit=1"
 	resp, err := http.Get(url)
 	if err != nil || resp.Status != "200 OK" {
 		return "", errors.New("API Request did not succeed")
@@ -96,7 +96,7 @@ func GetLatestBlockHash() (string, error) {
 func GetAccountData(a string) ([]byte, error) {
 	var err error
 	var data []byte
-	resp, err := http.Get(HorizonNetClient.HorizonURL + "/accounts/" + a)
+	resp, err := http.Get(HorizonClient.HorizonURL + "/accounts/" + a)
 	if err != nil {
 		return data, errors.Wrap(err, "could not get /accounts/ endpoint from API")
 	}
@@ -207,7 +207,7 @@ func HasStableCoin(publicKey string) bool {
 func GetTransactionData(txhash string) ([]byte, error) {
 	var err error
 	var data []byte
-	resp, err := http.Get(HorizonNetClient.HorizonURL + "/transactions/" + txhash)
+	resp, err := http.Get(HorizonClient.HorizonURL + "/transactions/" + txhash)
 	if err != nil || resp.Status != "200 OK" {
 		// check here since if we don't, we need to check the body of the unmarshalled
 		// response to see if we have 0

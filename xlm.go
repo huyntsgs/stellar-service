@@ -36,13 +36,15 @@ func AccountExists(publicKey string) bool {
 }
 
 // SendTx signs and broadcasts a given stellar tx
-func SendTx(mykp keypair.KP, tx build.Transaction) (int32, string, error) {
+func SendTx(mykp keypair.KP, tx *build.Transaction) (int32, string, error) {
+	//txs, err := tx.Sign(mykp.)
 	txe, err := tx.BuildSignEncode(mykp.(*keypair.Full))
+
 	if err != nil {
 		return -1, "", errors.Wrap(err, "could not build/sign/encode")
 	}
 
-	resp, err := HorizonNetClient.SubmitTransactionXDR(txe)
+	resp, err := HorizonClient.SubmitTransactionXDR(txe)
 	if err != nil {
 		log.Println("SubmitTransactionXDR err:", err)
 		return -1, "", errors.Wrap(err, "could not submit tx to horizon")
@@ -70,7 +72,7 @@ func SendXLMCreateAccount(destination string, amountx float64, seed string) (int
 		Amount:      amount,
 	}
 
-	tx := build.Transaction{
+	tx := &build.Transaction{
 		SourceAccount: &sourceAccount,
 		Operations:    []build.Operation{&op},
 		Timebounds:    build.NewInfiniteTimeout(),
@@ -91,6 +93,7 @@ func ReturnSourceAccount(seed string) (horizonprotocol.Account, keypair.KP, erro
 	ar := horizon.AccountRequest{AccountID: mykp.Address()}
 	sourceAccount, err = client.AccountDetail(ar)
 	if err != nil {
+		log.Println(err)
 		return sourceAccount, mykp, errors.Wrap(err, "could not load client details, quitting")
 	}
 
@@ -123,18 +126,20 @@ func SendXLM(destination string, amountx float64, seed string, memo string) (int
 	}
 
 	op := build.Payment{
-		Destination: destination,
-		Amount:      amount,
-		Asset:       build.NativeAsset{},
+		Destination:   destination,
+		Amount:        amount,
+		Asset:         build.NativeAsset{},
+		SourceAccount: &sourceAccount,
 	}
 
-	tx := build.Transaction{
+	tx := &build.Transaction{
 		SourceAccount: &sourceAccount,
 		Operations:    []build.Operation{&op},
 		Timebounds:    build.NewInfiniteTimeout(),
 		Network:       Passphrase,
 		Memo:          build.Memo(build.MemoText(memo)),
 	}
+	log.Println("Build tx")
 
 	return SendTx(mykp, tx)
 }

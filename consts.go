@@ -17,6 +17,7 @@ var (
 	IsMainNet bool
 	// TestNetClient defines the horizon client to connect to
 	HorizonClient *horizon.Client
+	//Client horizonc.
 )
 
 // RefillAmount defines the default stellar refill amount

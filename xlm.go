@@ -2,6 +2,7 @@ package xlm
 
 import (
 	"log"
+	"net/url"
 
 	"github.com/pkg/errors"
 
@@ -10,6 +11,10 @@ import (
 	"github.com/stellar/go/keypair"
 	horizonprotocol "github.com/stellar/go/protocols/horizon"
 	build "github.com/stellar/go/txnbuild"
+
+	b "github.com/stellar/go/build"
+
+	"github.com/stellar/go/xdr"
 )
 
 // xlm is a package with stellar related handlers which are useful for interacting with horizon
@@ -52,6 +57,92 @@ func SendTx(mykp keypair.KP, tx *build.Transaction) (int32, string, error) {
 
 	log.Printf("Propagated Transaction: %s, sequence: %d\n", resp.Hash, resp.Ledger)
 	return resp.Ledger, resp.Hash, nil
+}
+
+// ParseXDR parse xdr to transacation and check whether sourceAccount is valid
+// and then sign transaction with the signer key
+func ParseXDR(xdr, sourceAccount, secretKey string) (txresp horizonprotocol.TransactionSuccess, e error) {
+	//var e error
+	txn := decodeFromBase64(xdr)
+	if txn.E.Tx.SourceAccount.Address() != sourceAccount {
+		return txresp, errors.New("Invalid public key")
+	}
+	// 4. check the source account and mutate the transaction inside the transaction envelope if needed:
+	//     a. update the source account
+	//     b. set the sequence number
+	//     c. set the network passphrase
+	//	horizonClient := horizon.DefaultTestNetClient
+	// if txn.E.Tx.SourceAccount.Address() == "" {
+	// 	e = txn.MutateTX(
+	// 		// we assume that the accountID uses the master key, this can also be the accountID
+	// 		&b.SourceAccount{AddressOrSeed: secretKey},
+	// 		//&b.AutoSequence{SequenceProvider: HorizonClient},
+	// 		// need to reset the network passphrase
+	// 		Passphrase,
+	// 	)
+	// 	if e != nil {
+	// 		log.Fatal(e)
+	// 	}
+	// } else if txn.E.Tx.SeqNum == 0 {
+	// 	e = txn.MutateTX(
+	// 		// do not need to set the source account here, only the sequence number
+	// 		//&b.AutoSequence{SequenceProvider: HorizonClient},
+	// 		// need to reset the network passphrase
+	// 		Passphrase,
+	// 	)
+	// 	if e != nil {
+	// 		log.Fatal(e)
+	// 	}
+	// }
+
+	// 5. sign the transaction envelope
+	e = txn.Mutate(&b.Sign{Seed: secretKey})
+	if e != nil {
+		log.Println(e)
+		return txresp, e
+	}
+
+	// 6. convert the transaction to base64
+	reencodedTxnBase64, e := txn.Base64()
+	if e != nil {
+
+		log.Println(e)
+		return txresp, e
+	}
+
+	// 7. submit to the network
+	txresp, e = HorizonClient.SubmitTransactionXDR(reencodedTxnBase64)
+	if e != nil {
+		log.Println(e)
+		return txresp, e
+	}
+
+	return txresp, nil
+}
+
+// unescape decodes the URL-encoded and base64 encoded txn
+func unescape(escaped string) string {
+	unescaped, e := url.QueryUnescape(escaped)
+	if e != nil {
+		log.Fatal(e)
+	}
+	return unescaped
+}
+
+// decodeFromBase64 decodes the transaction from a base64 string into a TransactionEnvelopeBuilder
+func decodeFromBase64(encodedXdr string) *b.TransactionEnvelopeBuilder {
+	// Unmarshall from base64 encoded XDR format
+	var decoded xdr.TransactionEnvelope
+	e := xdr.SafeUnmarshalBase64(encodedXdr, &decoded)
+	if e != nil {
+		log.Fatal(e)
+	}
+
+	// convert to TransactionEnvelopeBuilder
+	txEnvelopeBuilder := b.TransactionEnvelopeBuilder{E: &decoded}
+	txEnvelopeBuilder.Init()
+
+	return &txEnvelopeBuilder
 }
 
 // SendXLMCreateAccount creates and sends XLM to a new account

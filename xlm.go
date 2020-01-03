@@ -95,6 +95,13 @@ func ParseXDR(xdr, sourceAccount, secretKey string) (txresp horizonprotocol.Tran
 	// 	}
 	// }
 
+	e = txn.MutateTX(
+		Network,
+	)
+	if e != nil {
+		log.Fatal(e)
+	}
+
 	// 5. sign the transaction envelope
 	e = txn.Mutate(&b.Sign{Seed: secretKey})
 	if e != nil {
@@ -105,7 +112,6 @@ func ParseXDR(xdr, sourceAccount, secretKey string) (txresp horizonprotocol.Tran
 	// 6. convert the transaction to base64
 	reencodedTxnBase64, e := txn.Base64()
 	if e != nil {
-
 		log.Println(e)
 		return txresp, e
 	}

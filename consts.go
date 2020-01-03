@@ -4,6 +4,7 @@ import (
 	"log"
 	"net/http"
 
+	b "github.com/stellar/go/build"
 	horizon "github.com/stellar/go/clients/horizonclient"
 	"github.com/stellar/go/network"
 )
@@ -17,6 +18,7 @@ var (
 	IsMainNet bool
 	// TestNetClient defines the horizon client to connect to
 	HorizonClient *horizon.Client
+	Network       b.Network
 	//Client horizonc.
 )
 
@@ -39,6 +41,7 @@ func SetupParams(amount float64, isMainnet bool) {
 			HorizonURL: "https://horizon.stellar.org/",
 			HTTP:       http.DefaultClient,
 		}
+		Network = b.PublicNetwork
 	} else {
 		log.Println("Pointing horizon to testnet")
 		Passphrase = network.TestNetworkPassphrase
@@ -46,5 +49,6 @@ func SetupParams(amount float64, isMainnet bool) {
 			HorizonURL: "https://horizon-testnet.stellar.org/",
 			HTTP:       http.DefaultClient,
 		}
+		Network = b.TestNetwork
 	}
 }

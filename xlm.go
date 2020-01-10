@@ -61,11 +61,13 @@ func SendTx(mykp keypair.KP, tx *build.Transaction) (int32, string, error) {
 
 // ParseXDR parse xdr to transacation and check whether sourceAccount is valid
 // and then sign transaction with the signer key
-func ParseXDR(xdr, sourceAccount, secretKey string) (txresp horizonprotocol.TransactionSuccess, e error) {
+func ParseXDR(xdr, sourceAccount, secretKey string) (txresp horizonprotocol.TransactionSuccess, e error, txcode string) {
 	//var e error
+	txcode = "tx_success"
 	txn := decodeFromBase64(xdr)
 	if txn.E.Tx.SourceAccount.Address() != sourceAccount {
-		return txresp, errors.New("Invalid public key")
+		txcode = "tx_invalid_source_account"
+		return txresp, errors.New("Invalid public key"), txcode
 	}
 	// 4. check the source account and mutate the transaction inside the transaction envelope if needed:
 	//     a. update the source account
@@ -106,24 +108,35 @@ func ParseXDR(xdr, sourceAccount, secretKey string) (txresp horizonprotocol.Tran
 	e = txn.Mutate(&b.Sign{Seed: secretKey})
 	if e != nil {
 		log.Println(e)
-		return txresp, e
+		return txresp, e, txcode
 	}
+
+	//	log.Println("txn:", txn.E.Tx.Operations[0].Body.ManageBuyOfferOp.Price)
 
 	// 6. convert the transaction to base64
 	reencodedTxnBase64, e := txn.Base64()
 	if e != nil {
 		log.Println(e)
-		return txresp, e
+		return txresp, e, txcode
 	}
+
+	//	log.Println("reencodedTxnBase64:", reencodedTxnBase64)
 
 	// 7. submit to the network
 	txresp, e = HorizonClient.SubmitTransactionXDR(reencodedTxnBase64)
 	if e != nil {
-		log.Println(e)
-		return txresp, e
+		hError := e.(*horizon.Error)
+		code, err := hError.ResultCodes()
+		if err == nil {
+			txcode = code.TransactionCode
+			return txresp, e, txcode
+		} else {
+			log.Println("Error submitting transaction:", code.TransactionCode, code.OperationCodes)
+			return txresp, e, txcode
+		}
 	}
 
-	return txresp, nil
+	return txresp, nil, txcode
 }
 
 // unescape decodes the URL-encoded and base64 encoded txn

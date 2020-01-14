@@ -63,11 +63,118 @@ func SendTx(mykp keypair.KP, tx *build.Transaction) (int32, string, error) {
 // and then sign transaction with the signer key
 func ParseXDR(xdr, sourceAccount, secretKey string) (txresp horizonprotocol.TransactionSuccess, e error, txcode string) {
 	//var e error
-	txcode = "tx_success"
+
+	txcode = "tx_invalid"
 	txn := decodeFromBase64(xdr)
 	if txn.E.Tx.SourceAccount.Address() != sourceAccount {
 		txcode = "tx_invalid_source_account"
 		return txresp, errors.New("Invalid public key"), txcode
+	}
+	// 4. check the source account and mutate the transaction inside the transaction envelope if needed:
+	//     a. update the source account
+	//     b. set the sequence number
+	//     c. set the network passphrase
+	//	horizonClient := horizon.DefaultTestNetClient
+	// if txn.E.Tx.SourceAccount.Address() == "" {
+	// 	e = txn.MutateTX(
+	// 		// we assume that the accountID uses the master key, this can also be the accountID
+	// 		&b.SourceAccount{AddressOrSeed: secretKey},
+	// 		//&b.AutoSequence{SequenceProvider: HorizonClient},
+	// 		// need to reset the network passphrase
+	// 		Passphrase,
+	// 	)
+	// 	if e != nil {
+	// 		log.Fatal(e)
+	// 	}
+	// } else if txn.E.Tx.SeqNum == 0 {
+	// e = txn.MutateTX(
+	// 	// do not need to set the source account here, only the sequence number
+	// 	&b.AutoSequence{SequenceProvider: HorizonClient},
+	// 	// need to reset the network passphrase
+	// 	Passphrase,
+	// )
+	// 	if e != nil {
+	// 		log.Fatal(e)
+	// 	}
+	// }
+
+	e = txn.MutateTX(
+		Network,
+	)
+	if e != nil {
+		log.Fatal(e)
+	}
+
+	// 5. sign the transaction envelope
+	e = txn.Mutate(&b.Sign{Seed: secretKey})
+	if e != nil {
+		log.Println(e)
+		return txresp, e, txcode
+	}
+	//	log.Println("txn:", txn.E.Tx.Operations[0].Body.ManageBuyOfferOp.Price)
+
+	// 6. convert the transaction to base64
+	reencodedTxnBase64, e := txn.Base64()
+	if e != nil {
+		log.Println(e)
+		return txresp, e, txcode
+	}
+
+	//	log.Println("reencodedTxnBase64:", reencodedTxnBase64)
+
+	// 7. submit to the network
+	txresp, e = HorizonClient.SubmitTransactionXDR(reencodedTxnBase64)
+	if e != nil {
+		hError := e.(*horizon.Error)
+		code, err := hError.ResultCodes()
+		if err == nil {
+			txcode = code.TransactionCode
+			return txresp, e, txcode
+		} else {
+			log.Println("Error submitting transaction:", code.TransactionCode, code.OperationCodes)
+			return txresp, e, txcode
+		}
+	}
+	txcode = "tx_success"
+	return txresp, nil, txcode
+}
+
+// ParseXDR parse xdr to transacation and check whether sourceAccount is valid
+// and then sign transaction with the signer key
+func ParseLoanXDR(xdrData, sourceAccount, secretKey, destPublickey string, amount float64) (txresp horizonprotocol.TransactionSuccess, e error, txcode string) {
+	//var e error
+
+	txcode = "tx_invalid"
+	txn := decodeFromBase64(xdrData)
+	if txn.E.Tx.SourceAccount.Address() != sourceAccount {
+		txcode = "tx_invalid_source_account"
+		return txresp, errors.New("Invalid public key"), "invalid public key"
+	}
+
+	// Destination AccountId
+	// Asset       Asset
+	// Amount      Int64
+	txamount := int64(txn.E.Tx.Operations[0].Body.PaymentOp.Amount)
+	log.Println("txamount:", txamount)
+	if txamount < int64(amount*float64(1000000)) {
+		txcode = "invalid_amount"
+		return txresp, errors.New("invalid amount"), txcode
+	}
+	//log.Println("txn.E.Tx.Operations:", txn.E.Tx.Operations)
+	//dest := txn.E.Tx.Operations[0].Body.PaymentOp.Destination
+	if len(txn.E.Tx.Operations) > 0 {
+		if txn.E.Tx.Operations[0].Body.PaymentOp.Destination.Address() != destPublickey {
+			txcode = "invalid_dest_addr"
+			return txresp, errors.New("invalid destination address"), txcode
+		}
+		// if txn.E.Tx.Operations[0].Body.SetOptionsOp.HighThreshold != xdr.Uint32{0} {
+		// 	txcode = "invalid_setops"
+		// 	return txresp, errors.New("invalid set ops"), txcode
+		// }
+		//log.Println("txn.E.Tx.Operations[1]:", txn.E.Tx.Operations[1])
+	} else {
+		txcode = "invalid_payment"
+		return txresp, errors.New("invalid payment"), txcode
 	}
 	// 4. check the source account and mutate the transaction inside the transaction envelope if needed:
 	//     a. update the source account
@@ -105,6 +212,27 @@ func ParseXDR(xdr, sourceAccount, secretKey string) (txresp horizonprotocol.Tran
 	}
 
 	// 5. sign the transaction envelope
+	// type SetOptionsOp struct {
+	// 	InflationDest *AccountId
+	// 	ClearFlags    *Uint32
+	// 	SetFlags      *Uint32
+	// 	MasterWeight  *Uint32
+	// 	LowThreshold  *Uint32
+	// 	MedThreshold  *Uint32
+	// 	HighThreshold *Uint32
+	// 	HomeDomain    *String32
+	// 	Signer        *Signer
+	// }
+	// so := xdr.SetOptionsOp{
+	// 	HighThreshold: xdr.Uint32{0},
+	// 	Signer:        &xdr.AddSigner(destPublickey, 0),
+	// }
+	//e = txn.MutateTX(&b.SetOptionsBuilder{SO: so})
+
+	if e != nil {
+		log.Println(e)
+		return txresp, e, txcode
+	}
 	e = txn.Mutate(&b.Sign{Seed: secretKey})
 	if e != nil {
 		log.Println(e)
@@ -135,7 +263,7 @@ func ParseXDR(xdr, sourceAccount, secretKey string) (txresp horizonprotocol.Tran
 			return txresp, e, txcode
 		}
 	}
-
+	txcode = "tx_success"
 	return txresp, nil, txcode
 }
 

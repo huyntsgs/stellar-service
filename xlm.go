@@ -40,6 +40,42 @@ func AccountExists(publicKey string) bool {
 	return x.Sequence != "0" // if the sequence is zero, the account doesn't exist yet. This equals to the ledger number at which the account was created
 }
 
+func MergeAccount(sourcePk, dstPk, signerSeed string) error {
+
+	sourceAccount, err := ReturnSourceAccountPubkey(sourcePk)
+	if err != nil {
+		return err
+	}
+
+	op := build.AccountMerge{
+		Destination: dstPk,
+	}
+
+	tx := build.Transaction{
+		SourceAccount: &sourceAccount,
+		Operations:    []build.Operation{&op},
+		Timebounds:    build.NewInfiniteTimeout(),
+		Network:       Passphrase,
+	}
+
+	kp, err := keypair.Parse(signerSeed)
+	if err != nil {
+		return err
+	}
+
+	txe, err := tx.BuildSignEncode(kp.(*keypair.Full))
+	if err != nil {
+		return err
+	}
+
+	_, err = HorizonClient.SubmitTransactionXDR(txe)
+	if err != nil {
+		log.Println("SubmitTransaction err:", err)
+		return err
+	}
+	return nil
+}
+
 // SendTx signs and broadcasts a given stellar tx
 func SendTx(mykp keypair.KP, tx *build.Transaction) (int32, string, error) {
 	//txs, err := tx.Sign(mykp.)

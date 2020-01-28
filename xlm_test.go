@@ -10,7 +10,7 @@ import (
 	build "github.com/stellar/go/txnbuild"
 )
 
-func TestXLM(t *testing.T) {
+func XLM(t *testing.T) {
 	RefillAmount = 10
 	seed, address, err := GetKeyPair()
 	if err != nil {

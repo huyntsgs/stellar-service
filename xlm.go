@@ -40,7 +40,7 @@ func AccountExists(publicKey string) bool {
 	return x.Sequence != "0" // if the sequence is zero, the account doesn't exist yet. This equals to the ledger number at which the account was created
 }
 
-func MergeAccount(sourcePk, dstPk, signerSeed string) error {
+func MergeAccount(sourcePk, dstPk, signerSeed, assetIssuer string) error {
 
 	sourceAccount, err := ReturnSourceAccountPubkey(sourcePk)
 	if err != nil {
@@ -51,9 +51,14 @@ func MergeAccount(sourcePk, dstPk, signerSeed string) error {
 		Destination: dstPk,
 	}
 
+	removeTrust := build.ChangeTrust{
+		Line:  build.CreditAsset{Code: "GRX", Issuer: assetIssuer},
+		Limit: "0",
+	}
+
 	tx := build.Transaction{
 		SourceAccount: &sourceAccount,
-		Operations:    []build.Operation{&op},
+		Operations:    []build.Operation{&op, &removeTrust},
 		Timebounds:    build.NewInfiniteTimeout(),
 		Network:       Passphrase,
 	}
@@ -68,9 +73,10 @@ func MergeAccount(sourcePk, dstPk, signerSeed string) error {
 		return err
 	}
 
-	_, err = HorizonClient.SubmitTransactionXDR(txe)
+	txres, err := HorizonClient.SubmitTransactionXDR(txe)
 	if err != nil {
 		log.Println("SubmitTransaction err:", err)
+		log.Println("SubmitTransaction result:", txres)
 		return err
 	}
 	return nil

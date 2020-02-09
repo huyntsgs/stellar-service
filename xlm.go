@@ -42,54 +42,128 @@ func AccountExists(publicKey string) bool {
 
 func MergeAccount(sourcePk, dstPk, signerSeed, assetIssuer string) error {
 
-	sourceAccount, err := ReturnSourceAccountPubkey(sourcePk)
-	if err != nil {
-		return err
-	}
+	// sourceAccount, err := ReturnSourceAccountPubkey(sourcePk)
+	// if err != nil {
+	// 	return err
+	// }
 
-	op := build.AccountMerge{
-		Destination: dstPk,
-	}
+	// op := build.AccountMerge{
+	// 	Destination: dstPk,
+	// }
 
-	removeTrust := build.ChangeTrust{
-		Line:  build.CreditAsset{Code: "GRX", Issuer: assetIssuer},
-		Limit: "0",
-	}
+	//changeTrust := build.RemoveTrustlineOp(build.CreditAsset{Code: "GRX", Issuer: assetIssuer})
+	// thh := build.Threshold(5)
+	// setOp := build.SetOptions{
+	// 	HighThreshold: &thh,
+	// }
 
-	tx := build.Transaction{
-		SourceAccount: &sourceAccount,
-		Operations:    []build.Operation{&op, &removeTrust},
-		Timebounds:    build.NewInfiniteTimeout(),
-		Network:       Passphrase,
-	}
+	// tx := build.Transaction{
+	// 	SourceAccount: &sourceAccount,
+	// 	Operations:    []build.Operation{&op, &removeTrust},
+	// 	Timebounds:    build.NewInfiniteTimeout(),
+	// 	Network:       Passphrase,
+	// }
 
-	kp, err := keypair.Parse(signerSeed)
-	if err != nil {
-		return err
-	}
+	// tx := build.Transaction{
+	// 	SourceAccount: &sourceAccount,
+	// 	Operations:    []build.Operation{&setOp},
+	// 	Timebounds:    build.NewInfiniteTimeout(),
+	// 	Network:       Passphrase,
+	// }
 
-	txe, err := tx.BuildSignEncode(kp.(*keypair.Full))
-	if err != nil {
-		return err
-	}
+	// //build.SetOptions
+	// //signerSeed = "SCQNWWVTB5HE47CCUQV7PMRFWZNRPFTSOYHJ4HIRGN5HK5JH2WCBMUZA"
+	// kp, err := keypair.Parse(signerSeed)
+	// if err != nil {
+	// 	return err
+	// }
 
-	txres, err := HorizonClient.SubmitTransactionXDR(txe)
-	if err != nil {
-		log.Println("SubmitTransaction err:", err)
-		log.Println("SubmitTransaction result:", txres)
-		return err
-	}
+	// txe, err := tx.BuildSignEncode(kp.(*keypair.Full))
+	// if err != nil {
+	// 	return err
+	// }
+
+	// txres, err := HorizonClient.SubmitTransactionXDR(txe)
+	// log.Println("SubmitTransaction xdr:", txe)
+	// if err != nil {
+	// 	log.Println("Set threshold err:", err, txres)
+	// 	return err
+	// } else {
+	// 	log.Println("Set threshold success:")
+	// }
+
+	// Set ops
+	// setOp = build.SetOptions{
+	// 	Signer: &build.Signer{Address: sourcePk, Weight: build.Threshold(0)},
+	// }
+	// tx = build.Transaction{
+	// 	SourceAccount: &sourceAccount,
+	// 	Operations:    []build.Operation{&setOp},
+	// 	Timebounds:    build.NewInfiniteTimeout(),
+	// 	Network:       Passphrase,
+	// }
+
+	// //build.SetOptions
+	// //signerSeed = "SCQNWWVTB5HE47CCUQV7PMRFWZNRPFTSOYHJ4HIRGN5HK5JH2WCBMUZA"
+	// kp, err = keypair.Parse(signerSeed)
+	// if err != nil {
+	// 	return err
+	// }
+
+	// txe, err = tx.BuildSignEncode(kp.(*keypair.Full))
+	// if err != nil {
+	// 	return err
+	// }
+
+	// txres, err = HorizonClient.SubmitTransactionXDR(txe)
+	// log.Println("Setops xdr:", txe)
+	// if err != nil {
+	// 	log.Println("Setops err:", err, txres)
+	// 	return err
+	// } else {
+	// 	log.Println("Setops success")
+	// }
+
+	// // Merge
+	// tx = build.Transaction{
+	// 	SourceAccount: &sourceAccount,
+	// 	Operations:    []build.Operation{&op},
+	// 	Timebounds:    build.NewInfiniteTimeout(),
+	// 	Network:       Passphrase,
+	// }
+
+	// //build.SetOptions
+	// kp, err = keypair.Parse(signerSeed)
+	// if err != nil {
+	// 	return err
+	// }
+
+	// txe, err = tx.BuildSignEncode(kp.(*keypair.Full))
+	// if err != nil {
+	// 	return err
+	// }
+
+	// txres, err = HorizonClient.SubmitTransactionXDR(txe)
+	// log.Println("SubmitTransaction xdr:", txe)
+	// if err != nil {
+	// 	log.Println("Merge account err:", err, txres)
+	// 	return err
+	// }
+
 	return nil
+
 }
 
 // SendTx signs and broadcasts a given stellar tx
 func SendTx(mykp keypair.KP, tx *build.Transaction) (int32, string, error) {
-	//txs, err := tx.Sign(mykp.)
+
 	txe, err := tx.BuildSignEncode(mykp.(*keypair.Full))
 
 	if err != nil {
 		return -1, "", errors.Wrap(err, "could not build/sign/encode")
 	}
+
+	log.Println("SendTx-xdr:", txe)
 
 	resp, err := HorizonClient.SubmitTransactionXDR(txe)
 	if err != nil {
@@ -280,8 +354,138 @@ func ParseLoanXDR(xdrData, sourceAccount, secretKey, destPublickey string, amoun
 		log.Println(e)
 		return txresp, e, txcode
 	}
+	// setOp := b.SetOptions{
+	// 	Signer: &build.Signer{Address: destPublickey, Weight: build.Threshold(0)},
+	// }
+	// e = txn.MutateTX(&setOp)
 
 	//	log.Println("txn:", txn.E.Tx.Operations[0].Body.ManageBuyOfferOp.Price)
+
+	// 6. convert the transaction to base64
+	reencodedTxnBase64, e := txn.Base64()
+	if e != nil {
+		log.Println(e)
+		return txresp, e, txcode
+	}
+
+	//	log.Println("reencodedTxnBase64:", reencodedTxnBase64)
+
+	// 7. submit to the network
+	txresp, e = HorizonClient.SubmitTransactionXDR(reencodedTxnBase64)
+	if e != nil {
+		hError := e.(*horizon.Error)
+		code, err := hError.ResultCodes()
+		if err == nil {
+			txcode = code.TransactionCode
+			return txresp, e, txcode
+		} else {
+			log.Println("Error submitting transaction:", code.TransactionCode, code.OperationCodes)
+			return txresp, e, txcode
+		}
+	}
+	txcode = "tx_success"
+	return txresp, nil, txcode
+}
+
+// ParseXDR parse xdr to transacation and check whether sourceAccount is valid
+// and then sign transaction with the signer key
+func ParseLoanXDR1(xdrData, sourceAccount, secretKey, destPublickey string, amount float64) (txresp horizonprotocol.TransactionSuccess, e error, txcode string) {
+	//var e error
+
+	txcode = "tx_invalid"
+	txn := decodeFromBase64(xdrData)
+	if txn.E.Tx.SourceAccount.Address() != sourceAccount {
+		txcode = "tx_invalid_source_account"
+		return txresp, errors.New("Invalid public key"), "invalid public key"
+	}
+
+	// Destination AccountId
+	// Asset       Asset
+	// Amount      Int64
+	txamount := int64(txn.E.Tx.Operations[0].Body.PaymentOp.Amount)
+	log.Println("txamount:", txamount)
+	if txamount < int64(amount*float64(1000000)) {
+		txcode = "invalid_amount"
+		return txresp, errors.New("invalid amount"), txcode
+	}
+	//log.Println("txn.E.Tx.Operations:", txn.E.Tx.Operations)
+	//dest := txn.E.Tx.Operations[0].Body.PaymentOp.Destination
+	if len(txn.E.Tx.Operations) > 0 {
+		if txn.E.Tx.Operations[0].Body.PaymentOp.Destination.Address() != destPublickey {
+			txcode = "invalid_dest_addr"
+			return txresp, errors.New("invalid destination address"), txcode
+		}
+		// if txn.E.Tx.Operations[0].Body.SetOptionsOp.HighThreshold != xdr.Uint32{0} {
+		// 	txcode = "invalid_setops"
+		// 	return txresp, errors.New("invalid set ops"), txcode
+		// }
+		//log.Println("txn.E.Tx.Operations[1]:", txn.E.Tx.Operations[1])
+	} else {
+		txcode = "invalid_payment"
+		return txresp, errors.New("invalid payment"), txcode
+	}
+	// 4. check the source account and mutate the transaction inside the transaction envelope if needed:
+	//     a. update the source account
+	//     b. set the sequence number
+	//     c. set the network passphrase
+	//	horizonClient := horizon.DefaultTestNetClient
+	// if txn.E.Tx.SourceAccount.Address() == "" {
+	// 	e = txn.MutateTX(
+	// 		// we assume that the accountID uses the master key, this can also be the accountID
+	// 		&b.SourceAccount{AddressOrSeed: secretKey},
+	// 		//&b.AutoSequence{SequenceProvider: HorizonClient},
+	// 		// need to reset the network passphrase
+	// 		Passphrase,
+	// 	)
+	// 	if e != nil {
+	// 		log.Fatal(e)
+	// 	}
+	// } else if txn.E.Tx.SeqNum == 0 {
+	// 	e = txn.MutateTX(
+	// 		// do not need to set the source account here, only the sequence number
+	// 		//&b.AutoSequence{SequenceProvider: HorizonClient},
+	// 		// need to reset the network passphrase
+	// 		Passphrase,
+	// 	)
+	// 	if e != nil {
+	// 		log.Fatal(e)
+	// 	}
+	// }
+
+	e = txn.MutateTX(
+		Network,
+	)
+	if e != nil {
+		log.Fatal(e)
+	}
+
+	// 5. sign the transaction envelope
+	// type SetOptionsOp struct {
+	// 	InflationDest *AccountId
+	// 	ClearFlags    *Uint32
+	// 	SetFlags      *Uint32
+	// 	MasterWeight  *Uint32
+	// 	LowThreshold  *Uint32
+	// 	MedThreshold  *Uint32
+	// 	HighThreshold *Uint32
+	// 	HomeDomain    *String32
+	// 	Signer        *Signer
+	// }
+	// so := xdr.SetOptionsOp{
+	// 	HighThreshold: xdr.Uint32{0},
+	// 	Signer:        &xdr.AddSigner(destPublickey, 0),
+	// }
+	//e = txn.MutateTX(&b.SetOptionsBuilder{SO: so})
+
+	if e != nil {
+		log.Println(e)
+		return txresp, e, txcode
+	}
+	e = txn.Mutate(&b.Sign{Seed: secretKey})
+	if e != nil {
+		log.Println(e)
+		return txresp, e, txcode
+	}
 
 	// 6. convert the transaction to base64
 	reencodedTxnBase64, e := txn.Base64()
@@ -419,7 +623,66 @@ func SendXLM(destination string, amountx float64, seed string, memo string) (int
 		Network:       Passphrase,
 		Memo:          build.Memo(build.MemoText(memo)),
 	}
-	log.Println("Build tx")
+	//log.Println("Build tx")
+
+	return SendTx(mykp, tx)
+}
+
+// SendAsset sends asset to a destination address
+func SendAsset(destination string, amountx float64, seed string, asset build.Asset, memo string) (int32, string, error) {
+	// don't check if the account exists or not, hopefully it does
+	sourceAccount, mykp, err := ReturnSourceAccount(seed)
+	if err != nil {
+		return -1, "", errors.Wrap(err, "could not return source account")
+	}
+
+	amount, err := utils.ToString(amountx)
+	if err != nil {
+		return -1, "", errors.Wrap(err, "could not convert amount to string")
+	}
+
+	op := build.Payment{
+		Destination:   destination,
+		Amount:        amount,
+		Asset:         asset,
+		SourceAccount: &sourceAccount,
+	}
+
+	tx := &build.Transaction{
+		SourceAccount: &sourceAccount,
+		Operations:    []build.Operation{&op},
+		Timebounds:    build.NewInfiniteTimeout(),
+		Network:       Passphrase,
+		Memo:          build.Memo(build.MemoText(memo)),
+	}
+	//log.Println("Build tx")
+
+	return SendTx(mykp, tx)
+}
+
+func RemoveSigner(sourceAcc string, loanAccSeed string) (int32, string, error) {
+
+	loanAcc, mykp, err := ReturnSourceAccount(loanAccSeed)
+	if err != nil {
+		return -1, "", errors.Wrap(err, "could not return source account")
+	}
+
+	client := getHorizonClient(IsMainNet)
+	ar := horizon.AccountRequest{AccountID: mykp.Address()}
+	sourceAccount, err := client.AccountDetail(ar)
+
+	op := build.SetOptions{
+		Signer: &build.Signer{Address: loanAcc.GetAccountID(), Weight: build.Threshold(0)},
+	}
+
+	tx := &build.Transaction{
+		SourceAccount: &sourceAccount,
+		Operations:    []build.Operation{&op},
+		Timebounds:    build.NewTimeout(180),
+		Network:       Passphrase,
+		Memo:          build.Memo(build.MemoText("")),
+	}
+	//log.Println("Build tx")
 
 	return SendTx(mykp, tx)
 }

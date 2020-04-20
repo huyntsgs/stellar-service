@@ -41,115 +41,6 @@ func AccountExists(publicKey string) bool {
 }
 
 func MergeAccount(sourcePk, dstPk, signerSeed, assetIssuer string) error {
-
-	// sourceAccount, err := ReturnSourceAccountPubkey(sourcePk)
-	// if err != nil {
-	// 	return err
-	// }
-
-	// op := build.AccountMerge{
-	// 	Destination: dstPk,
-	// }
-
-	//changeTrust := build.RemoveTrustlineOp(build.CreditAsset{Code: "GRX", Issuer: assetIssuer})
-	// thh := build.Threshold(5)
-	// setOp := build.SetOptions{
-	// 	HighThreshold: &thh,
-	// }
-
-	// tx := build.Transaction{
-	// 	SourceAccount: &sourceAccount,
-	// 	Operations:    []build.Operation{&op, &removeTrust},
-	// 	Timebounds:    build.NewInfiniteTimeout(),
-	// 	Network:       Passphrase,
-	// }
-
-	// tx := build.Transaction{
-	// 	SourceAccount: &sourceAccount,
-	// 	Operations:    []build.Operation{&setOp},
-	// 	Timebounds:    build.NewInfiniteTimeout(),
-	// 	Network:       Passphrase,
-	// }
-
-	// //build.SetOptions
-	// //signerSeed = "SCQNWWVTB5HE47CCUQV7PMRFWZNRPFTSOYHJ4HIRGN5HK5JH2WCBMUZA"
-	// kp, err := keypair.Parse(signerSeed)
-	// if err != nil {
-	// 	return err
-	// }
-
-	// txe, err := tx.BuildSignEncode(kp.(*keypair.Full))
-	// if err != nil {
-	// 	return err
-	// }
-
-	// txres, err := HorizonClient.SubmitTransactionXDR(txe)
-	// log.Println("SubmitTransaction xdr:", txe)
-	// if err != nil {
-	// 	log.Println("Set threshold err:", err, txres)
-	// 	return err
-	// } else {
-	// 	log.Println("Set threshold success:")
-	// }
-
-	// Set ops
-	// setOp = build.SetOptions{
-	// 	Signer: &build.Signer{Address: sourcePk, Weight: build.Threshold(0)},
-	// }
-	// tx = build.Transaction{
-	// 	SourceAccount: &sourceAccount,
-	// 	Operations:    []build.Operation{&setOp},
-	// 	Timebounds:    build.NewInfiniteTimeout(),
-	// 	Network:       Passphrase,
-	// }
-
-	// //build.SetOptions
-	// //signerSeed = "SCQNWWVTB5HE47CCUQV7PMRFWZNRPFTSOYHJ4HIRGN5HK5JH2WCBMUZA"
-	// kp, err = keypair.Parse(signerSeed)
-	// if err != nil {
-	// 	return err
-	// }
-
-	// txe, err = tx.BuildSignEncode(kp.(*keypair.Full))
-	// if err != nil {
-	// 	return err
-	// }
-
-	// txres, err = HorizonClient.SubmitTransactionXDR(txe)
-	// log.Println("Setops xdr:", txe)
-	// if err != nil {
-	// 	log.Println("Setops err:", err, txres)
-	// 	return err
-	// } else {
-	// 	log.Println("Setops success")
-	// }
-
-	// // Merge
-	// tx = build.Transaction{
-	// 	SourceAccount: &sourceAccount,
-	// 	Operations:    []build.Operation{&op},
-	// 	Timebounds:    build.NewInfiniteTimeout(),
-	// 	Network:       Passphrase,
-	// }
-
-	// //build.SetOptions
-	// kp, err = keypair.Parse(signerSeed)
-	// if err != nil {
-	// 	return err
-	// }
-
-	// txe, err = tx.BuildSignEncode(kp.(*keypair.Full))
-	// if err != nil {
-	// 	return err
-	// }
-
-	// txres, err = HorizonClient.SubmitTransactionXDR(txe)
-	// log.Println("SubmitTransaction xdr:", txe)
-	// if err != nil {
-	// 	log.Println("Merge account err:", err, txres)
-	// 	return err
-	// }
-
 	return nil
 
 }
@@ -186,34 +77,7 @@ func ParseXDR(xdr, sourceAccount, secretKey string) (txresp horizonprotocol.Tran
 		txcode = "tx_invalid_source_account"
 		return txresp, errors.New("Invalid public key"), txcode
 	}
-	// 4. check the source account and mutate the transaction inside the transaction envelope if needed:
-	//     a. update the source account
-	//     b. set the sequence number
-	//     c. set the network passphrase
-	//	horizonClient := horizon.DefaultTestNetClient
-	// if txn.E.Tx.SourceAccount.Address() == "" {
-	// 	e = txn.MutateTX(
-	// 		// we assume that the accountID uses the master key, this can also be the accountID
-	// 		&b.SourceAccount{AddressOrSeed: secretKey},
-	// 		//&b.AutoSequence{SequenceProvider: HorizonClient},
-	// 		// need to reset the network passphrase
-	// 		Passphrase,
-	// 	)
-	// 	if e != nil {
-	// 		log.Fatal(e)
-	// 	}
-	// } else if txn.E.Tx.SeqNum == 0 {
-	// e = txn.MutateTX(
-	// 	// do not need to set the source account here, only the sequence number
-	// 	&b.AutoSequence{SequenceProvider: HorizonClient},
-	// 	// need to reset the network passphrase
-	// 	Passphrase,
-	// )
-	// 	if e != nil {
-	// 		log.Fatal(e)
-	// 	}
-	// }
-
+	
 	e = txn.MutateTX(
 		Network,
 	)
@@ -292,58 +156,14 @@ func ParseLoanXDR(xdrData, sourceAccount, secretKey, destPublickey string, amoun
 		txcode = "invalid_payment"
 		return txresp, errors.New("invalid payment"), txcode
 	}
-	// 4. check the source account and mutate the transaction inside the transaction envelope if needed:
-	//     a. update the source account
-	//     b. set the sequence number
-	//     c. set the network passphrase
-	//	horizonClient := horizon.DefaultTestNetClient
-	// if txn.E.Tx.SourceAccount.Address() == "" {
-	// 	e = txn.MutateTX(
-	// 		// we assume that the accountID uses the master key, this can also be the accountID
-	// 		&b.SourceAccount{AddressOrSeed: secretKey},
-	// 		//&b.AutoSequence{SequenceProvider: HorizonClient},
-	// 		// need to reset the network passphrase
-	// 		Passphrase,
-	// 	)
-	// 	if e != nil {
-	// 		log.Fatal(e)
-	// 	}
-	// } else if txn.E.Tx.SeqNum == 0 {
-	// 	e = txn.MutateTX(
-	// 		// do not need to set the source account here, only the sequence number
-	// 		//&b.AutoSequence{SequenceProvider: HorizonClient},
-	// 		// need to reset the network passphrase
-	// 		Passphrase,
-	// 	)
-	// 	if e != nil {
-	// 		log.Fatal(e)
-	// 	}
-	// }
+	
 
 	e = txn.MutateTX(
 		Network,
 	)
 	if e != nil {
 		log.Fatal(e)
-	}
-
-	// 5. sign the transaction envelope
-	// type SetOptionsOp struct {
-	// 	InflationDest *AccountId
-	// 	ClearFlags    *Uint32
-	// 	SetFlags      *Uint32
-	// 	MasterWeight  *Uint32
-	// 	LowThreshold  *Uint32
-	// 	MedThreshold  *Uint32
-	// 	HighThreshold *Uint32
-	// 	HomeDomain    *String32
-	// 	Signer        *Signer
-	// }
-	// so := xdr.SetOptionsOp{
-	// 	HighThreshold: xdr.Uint32{0},
-	// 	Signer:        &xdr.AddSigner(destPublickey, 0),
-	// }
-	//e = txn.MutateTX(&b.SetOptionsBuilder{SO: so})
+	}	
 
 	if e != nil {
 		log.Println(e)
@@ -424,58 +244,13 @@ func ParseLoanXDR1(xdrData, sourceAccount, secretKey, destPublickey string, amou
 		txcode = "invalid_payment"
 		return txresp, errors.New("invalid payment"), txcode
 	}
-	// 4. check the source account and mutate the transaction inside the transaction envelope if needed:
-	//     a. update the source account
-	//     b. set the sequence number
-	//     c. set the network passphrase
-	//	horizonClient := horizon.DefaultTestNetClient
-	// if txn.E.Tx.SourceAccount.Address() == "" {
-	// 	e = txn.MutateTX(
-	// 		// we assume that the accountID uses the master key, this can also be the accountID
-	// 		&b.SourceAccount{AddressOrSeed: secretKey},
-	// 		//&b.AutoSequence{SequenceProvider: HorizonClient},
-	// 		// need to reset the network passphrase
-	// 		Passphrase,
-	// 	)
-	// 	if e != nil {
-	// 		log.Fatal(e)
-	// 	}
-	// } else if txn.E.Tx.SeqNum == 0 {
-	// 	e = txn.MutateTX(
-	// 		// do not need to set the source account here, only the sequence number
-	// 		//&b.AutoSequence{SequenceProvider: HorizonClient},
-	// 		// need to reset the network passphrase
-	// 		Passphrase,
-	// 	)
-	// 	if e != nil {
-	// 		log.Fatal(e)
-	// 	}
-	// }
-
+	
 	e = txn.MutateTX(
 		Network,
 	)
 	if e != nil {
 		log.Fatal(e)
-	}
-
-	// 5. sign the transaction envelope
-	// type SetOptionsOp struct {
-	// 	InflationDest *AccountId
-	// 	ClearFlags    *Uint32
-	// 	SetFlags      *Uint32
-	// 	MasterWeight  *Uint32
-	// 	LowThreshold  *Uint32
-	// 	MedThreshold  *Uint32
-	// 	HighThreshold *Uint32
-	// 	HomeDomain    *String32
-	// 	Signer        *Signer
-	// }
-	// so := xdr.SetOptionsOp{
-	// 	HighThreshold: xdr.Uint32{0},
-	// 	Signer:        &xdr.AddSigner(destPublickey, 0),
-	// }
-	//e = txn.MutateTX(&b.SetOptionsBuilder{SO: so})
+	}	
 
 	if e != nil {
 		log.Println(e)

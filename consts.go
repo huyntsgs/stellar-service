@@ -32,13 +32,34 @@ func GetHorizonClient() *horizon.Client {
 // SetConsts XLM consts
 func SetupParams(amount float64, isMainnet bool) {
 	RefillAmount = amount
-	IsMainNet = isMainnet
-	//log.Println("SETTING MAINNET TO: ", isMainnet)
+	IsMainNet = isMainnet	
 	if IsMainNet {
 		Passphrase = network.PublicNetworkPassphrase
 		log.Println("Pointing horizon to mainnet")
 		HorizonClient = &horizon.Client{
 			HorizonURL: "https://horizon.stellar.org/",
+			HTTP:       http.DefaultClient,
+		}
+		Network = b.PublicNetwork
+	} else {
+		log.Println("Pointing horizon to testnet")
+		Passphrase = network.TestNetworkPassphrase
+		HorizonClient = &horizon.Client{
+			HorizonURL: "https://horizon-testnet.stellar.org/",
+			HTTP:       http.DefaultClient,
+		}
+		Network = b.TestNetwork
+	}
+}
+func SetupParam(amount float64, isMainnet bool, horizonUrl string) {
+	RefillAmount = amount
+	IsMainNet = isMainnet
+	
+	if IsMainNet {
+		Passphrase = network.PublicNetworkPassphrase
+		log.Println("Pointing horizon to mainnet")
+		HorizonClient = &horizon.Client{
+			HorizonURL: horizonUrl,
 			HTTP:       http.DefaultClient,
 		}
 		Network = b.PublicNetwork

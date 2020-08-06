@@ -121,15 +121,12 @@ func SendTx(mykp keypair.KP, tx *build.Transaction) (int32, string, error) {
 		return -1, "", errors.Wrap(err, "could not build/sign/encode")
 	}
 
-	log.Println("SendTx-xdr:", txe)
-
 	resp, err := HorizonClient.SubmitTransactionXDR(txe)
 	if err != nil {
 		log.Println("SubmitTransactionXDR err:", err)
 		return -1, "", errors.Wrap(err, "could not submit tx to horizon")
 	}
 
-	log.Printf("Propagated Transaction: %s, sequence: %d\n", resp.Hash, resp.Ledger)
 	return resp.Ledger, resp.Hash, nil
 }
 

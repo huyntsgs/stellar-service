@@ -47,9 +47,9 @@ func MergeAccount(sourceAcc string, loanAccSeed string, asset build.CreditAsset)
 		return -1, "", errors.Wrap(err, "could not return source account")
 	}
 
-	client := getHorizonClient(IsMainNet)
-	ar := horizon.AccountRequest{AccountID: mykp.Address()}
-	loanSrcAccount, err := client.AccountDetail(ar)
+	// client := getHorizonClient(IsMainNet)
+	// ar := horizon.AccountRequest{AccountID: mykp.Address()}
+	// loanSrcAccount, err := client.AccountDetail(ar)
 
 	mergedAcc := &build.SimpleAccount{AccountID: sourceAcc}
 
@@ -60,8 +60,45 @@ func MergeAccount(sourceAcc string, loanAccSeed string, asset build.CreditAsset)
 	}
 
 	op1 := &build.AccountMerge{
-		Destination:   loanSrcAccount.AccountID,
+		Destination:   loanAcc.AccountID,
 		SourceAccount: mergedAcc,
+	}
+
+	tx := &build.Transaction{
+		SourceAccount: &loanAcc,
+		Operations:    []build.Operation{op, op1},
+		Timebounds:    build.NewTimeout(180),
+		Network:       Passphrase,
+		Memo:          build.Memo(build.MemoText("")),
+	}
+
+	return SendTx(mykp, tx)
+}
+
+func PayLoan(sourceAcc string, loanAccSeed string) (int32, string, error) {
+
+	loanAcc, mykp, err := ReturnSourceAccount(loanAccSeed)
+	if err != nil {
+		return -1, "", errors.Wrap(err, "could not return source account")
+	}
+
+	userAcc := &build.SimpleAccount{AccountID: sourceAcc}
+
+	// Pay loan
+	op := &build.Payment{
+		Destination:   loanAcc.AccountID,
+		Amount:        "2.1",
+		Asset:         build.NativeAsset{},
+		SourceAccount: userAcc,
+	}
+	// set threshold, remove signer
+	h := build.Threshold(0)
+	m := build.Threshold(0)
+	op1 := &build.SetOptions{
+		HighThreshold:   &h,
+		MediumThreshold: &m,
+		Signer:          &build.Signer{Address: loanAcc.AccountID, Weight: build.Threshold(0)},
+		SourceAccount:   userAcc,
 	}
 
 	tx := &build.Transaction{

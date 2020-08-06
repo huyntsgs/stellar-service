@@ -49,23 +49,23 @@ func MergeAccount(sourceAcc string, loanAccSeed string, asset build.CreditAsset)
 
 	client := getHorizonClient(IsMainNet)
 	ar := horizon.AccountRequest{AccountID: mykp.Address()}
-	sourceAccount, err := client.AccountDetail(ar)
+	loanSrcAccount, err := client.AccountDetail(ar)
 
 	mergedAcc := &build.SimpleAccount{AccountID: sourceAcc}
 
 	op := &build.ChangeTrust{
 		Line:          asset,
-		Limit:         0,
+		Limit:         "0",
 		SourceAccount: mergedAcc,
 	}
 
 	op1 := &build.AccountMerge{
-		Destination:   destination,
+		Destination:   loanSrcAccount.AccountID,
 		SourceAccount: mergedAcc,
 	}
 
 	tx := &build.Transaction{
-		SourceAccount: sourceAccount,
+		SourceAccount: loanSrcAccount,
 		Operations:    []build.Operation{op, op1},
 		Timebounds:    build.NewTimeout(180),
 		Network:       Passphrase,

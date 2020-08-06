@@ -65,7 +65,7 @@ func MergeAccount(sourceAcc string, loanAccSeed string, asset build.CreditAsset)
 	}
 
 	tx := &build.Transaction{
-		SourceAccount: loanSrcAccount,
+		SourceAccount: &loanAcc,
 		Operations:    []build.Operation{op, op1},
 		Timebounds:    build.NewTimeout(180),
 		Network:       Passphrase,
@@ -107,7 +107,7 @@ func ParseXDR(xdr, sourceAccount, secretKey string) (txresp horizonprotocol.Tran
 		txcode = "tx_invalid_source_account"
 		return txresp, errors.New("Invalid public key"), txcode
 	}
-	
+
 	e = txn.MutateTX(
 		Network,
 	)
@@ -186,14 +186,13 @@ func ParseLoanXDR(xdrData, sourceAccount, secretKey, destPublickey string, amoun
 		txcode = "invalid_payment"
 		return txresp, errors.New("invalid payment"), txcode
 	}
-	
 
 	e = txn.MutateTX(
 		Network,
 	)
 	if e != nil {
 		log.Fatal(e)
-	}	
+	}
 
 	if e != nil {
 		log.Println(e)
@@ -274,13 +273,13 @@ func ParseLoanXDR1(xdrData, sourceAccount, secretKey, destPublickey string, amou
 		txcode = "invalid_payment"
 		return txresp, errors.New("invalid payment"), txcode
 	}
-	
+
 	e = txn.MutateTX(
 		Network,
 	)
 	if e != nil {
 		log.Fatal(e)
-	}	
+	}
 
 	if e != nil {
 		log.Println(e)

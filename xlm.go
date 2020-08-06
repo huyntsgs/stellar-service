@@ -40,9 +40,39 @@ func AccountExists(publicKey string) bool {
 	return x.Sequence != "0" // if the sequence is zero, the account doesn't exist yet. This equals to the ledger number at which the account was created
 }
 
-func MergeAccount(sourcePk, dstPk, signerSeed, assetIssuer string) error {
-	return nil
+func MergeAccount(sourceAcc string, loanAccSeed string, asset build.CreditAsset) (int32, string, error) {
 
+	loanAcc, mykp, err := ReturnSourceAccount(loanAccSeed)
+	if err != nil {
+		return -1, "", errors.Wrap(err, "could not return source account")
+	}
+
+	client := getHorizonClient(IsMainNet)
+	ar := horizon.AccountRequest{AccountID: mykp.Address()}
+	sourceAccount, err := client.AccountDetail(ar)
+
+	mergedAcc := &build.SimpleAccount{AccountID: sourceAcc}
+
+	op := &build.ChangeTrust{
+		Line:          asset,
+		Limit:         0,
+		SourceAccount: mergedAcc,
+	}
+
+	op1 := &build.AccountMerge{
+		Destination:   destination,
+		SourceAccount: mergedAcc,
+	}
+
+	tx := &build.Transaction{
+		SourceAccount: sourceAccount,
+		Operations:    []build.Operation{op, op1},
+		Timebounds:    build.NewTimeout(180),
+		Network:       Passphrase,
+		Memo:          build.Memo(build.MemoText("")),
+	}
+
+	return SendTx(mykp, tx)
 }
 
 // SendTx signs and broadcasts a given stellar tx

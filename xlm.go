@@ -47,10 +47,6 @@ func MergeAccount(sourceAcc string, loanAccSeed string, asset build.CreditAsset)
 		return -1, "", errors.Wrap(err, "could not return source account")
 	}
 
-	// client := getHorizonClient(IsMainNet)
-	// ar := horizon.AccountRequest{AccountID: mykp.Address()}
-	// loanSrcAccount, err := client.AccountDetail(ar)
-
 	mergedAcc := &build.SimpleAccount{AccountID: sourceAcc}
 
 	op := &build.ChangeTrust{
@@ -156,7 +152,6 @@ func ParseXDR(xdr, sourceAccount, secretKey string) (txresp horizonprotocol.Tran
 		log.Println(e)
 		return txresp, e, txcode
 	}
-	//	log.Println("txn:", txn.E.Tx.Operations[0].Body.ManageBuyOfferOp.Price)
 
 	// 6. convert the transaction to base64
 	reencodedTxnBase64, e := txn.Base64()
@@ -205,18 +200,13 @@ func ParseLoanXDR(xdrData, sourceAccount, secretKey, destPublickey string, amoun
 		txcode = "invalid_amount"
 		return txresp, errors.New("invalid amount"), txcode
 	}
-	//log.Println("txn.E.Tx.Operations:", txn.E.Tx.Operations)
-	//dest := txn.E.Tx.Operations[0].Body.PaymentOp.Destination
+
 	if len(txn.E.Tx.Operations) > 0 {
 		if txn.E.Tx.Operations[0].Body.PaymentOp.Destination.Address() != destPublickey {
 			txcode = "invalid_dest_addr"
 			return txresp, errors.New("invalid destination address"), txcode
 		}
-		// if txn.E.Tx.Operations[0].Body.SetOptionsOp.HighThreshold != xdr.Uint32{0} {
-		// 	txcode = "invalid_setops"
-		// 	return txresp, errors.New("invalid set ops"), txcode
-		// }
-		//log.Println("txn.E.Tx.Operations[1]:", txn.E.Tx.Operations[1])
+
 	} else {
 		txcode = "invalid_payment"
 		return txresp, errors.New("invalid payment"), txcode
@@ -238,12 +228,6 @@ func ParseLoanXDR(xdrData, sourceAccount, secretKey, destPublickey string, amoun
 		log.Println(e)
 		return txresp, e, txcode
 	}
-	// setOp := b.SetOptions{
-	// 	Signer: &build.Signer{Address: destPublickey, Weight: build.Threshold(0)},
-	// }
-	// e = txn.MutateTX(&setOp)
-
-	//	log.Println("txn:", txn.E.Tx.Operations[0].Body.ManageBuyOfferOp.Price)
 
 	// 6. convert the transaction to base64
 	reencodedTxnBase64, e := txn.Base64()
@@ -251,8 +235,6 @@ func ParseLoanXDR(xdrData, sourceAccount, secretKey, destPublickey string, amoun
 		log.Println(e)
 		return txresp, e, txcode
 	}
-
-	//	log.Println("reencodedTxnBase64:", reencodedTxnBase64)
 
 	// 7. submit to the network
 	txresp, e = HorizonClient.SubmitTransactionXDR(reencodedTxnBase64)
@@ -462,8 +444,6 @@ func SendXLM(destination string, amountx float64, seed string, memo string) (int
 		Network:       Passphrase,
 		Memo:          build.Memo(build.MemoText(memo)),
 	}
-	//log.Println("Build tx")
-
 	return SendTx(mykp, tx)
 }
 
@@ -494,7 +474,6 @@ func SendAsset(destination string, amountx float64, seed string, asset build.Ass
 		Network:       Passphrase,
 		Memo:          build.Memo(build.MemoText(memo)),
 	}
-	//log.Println("Build tx")
 
 	return SendTx(mykp, tx)
 }

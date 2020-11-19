@@ -33,7 +33,7 @@ func CreateAsset(assetName string, PublicKey string) build.Asset {
 // preset limit on how much it is willing to trust the issuer
 func TrustAsset(assetCode string, assetIssuer string, limitx float64, seed string) (string, error) {
 	// TRUST is FROM Seed TO assetIssuer
-	passphrase := xlm.Passphrase
+	//passphrase := xlm.Passphrase
 
 	sourceAccount, mykp, err := xlm.ReturnSourceAccount(seed)
 	if err != nil {
@@ -52,12 +52,20 @@ func TrustAsset(assetCode string, assetIssuer string, limitx float64, seed strin
 		Limit: limit,
 	}
 
-	tx := &build.Transaction{
-		SourceAccount: &sourceAccount,
-		Operations:    []build.Operation{&op},
-		Timebounds:    build.NewInfiniteTimeout(),
-		Network:       passphrase,
-	}
+	// tx := &build.Transaction{
+	// 	SourceAccount: &sourceAccount,
+	// 	Operations:    []build.Operation{&op},
+
+	// 	Timebounds: build.NewInfiniteTimeout(),
+	// 	BaseFee:    build.MinBaseFee,
+	// }
+	tx, _ := build.NewTransaction(build.TransactionParams{
+		SourceAccount:        &sourceAccount,
+		Operations:           []build.Operation{&op},
+		IncrementSequenceNum: true,
+		Timebounds:           build.NewInfiniteTimeout(),
+		BaseFee:              build.MinBaseFee,
+	})
 
 	_, txHash, err := xlm.SendTx(mykp, tx)
 	if err != nil {
@@ -70,7 +78,6 @@ func TrustAsset(assetCode string, assetIssuer string, limitx float64, seed strin
 // SendAssetFromIssuer transfers an asset from the issuer to the desired publickey.
 func SendAssetFromIssuer(assetCode string, destination string, amountx float64,
 	seed string, issuerPubkey string) (int32, string, error) {
-	passphrase := xlm.Passphrase
 
 	sourceAccount, mykp, err := xlm.ReturnSourceAccount(seed)
 	if err != nil {
@@ -87,13 +94,20 @@ func SendAssetFromIssuer(assetCode string, destination string, amountx float64,
 		Amount:      amount,
 		Asset:       build.CreditAsset{assetCode, issuerPubkey},
 	}
-
-	tx := &build.Transaction{
-		SourceAccount: &sourceAccount,
-		Operations:    []build.Operation{&op},
-		Timebounds:    build.NewInfiniteTimeout(),
-		Network:       passphrase,
-	}
+	tx, _ := build.NewTransaction(build.TransactionParams{
+		SourceAccount:        &sourceAccount,
+		Operations:           []build.Operation{&op},
+		Timebounds:           build.NewInfiniteTimeout(),
+		IncrementSequenceNum: true,
+		BaseFee:              build.MinBaseFee,
+		Memo:                 build.Memo(build.MemoText("loan paid for GrayLL")),
+	})
+	// tx := &build.Transaction{
+	// 	SourceAccount: &sourceAccount,
+	// 	Operations:    []build.Operation{&op},
+	// 	Timebounds:    build.NewInfiniteTimeout(),
+	// 	Network:       passphrase,
+	// }
 
 	return xlm.SendTx(mykp, tx)
 }
@@ -101,8 +115,6 @@ func SendAssetFromIssuer(assetCode string, destination string, amountx float64,
 // SendAssetToIssuer sends an asset back to the issuer
 func SendAssetToIssuer(assetCode string, destination string, amountx float64,
 	seed string) (int32, string, error) {
-
-	passphrase := xlm.Passphrase
 
 	sourceAccount, mykp, err := xlm.ReturnSourceAccount(seed)
 	if err != nil {
@@ -119,13 +131,20 @@ func SendAssetToIssuer(assetCode string, destination string, amountx float64,
 		Amount:      amount,
 		Asset:       build.CreditAsset{assetCode, destination},
 	}
-
-	tx := &build.Transaction{
+	tx, _ := build.NewTransaction(build.TransactionParams{
 		SourceAccount: &sourceAccount,
 		Operations:    []build.Operation{&op},
 		Timebounds:    build.NewInfiniteTimeout(),
-		Network:       passphrase,
-	}
+		BaseFee:       build.MinBaseFee,
+		Memo:          build.Memo(build.MemoText("")),
+	})
+
+	// tx := &build.Transaction{
+	// 	SourceAccount: &sourceAccount,
+	// 	Operations:    []build.Operation{&op},
+	// 	Timebounds:    build.NewInfiniteTimeout(),
+	// 	Network:       passphrase,
+	// }
 
 	return xlm.SendTx(mykp, tx)
 }
@@ -133,7 +152,6 @@ func SendAssetToIssuer(assetCode string, destination string, amountx float64,
 // SendAsset sends an asset to a destination which has an established trustline with the issuer
 func SendAsset(asset Asset, destination string, amountx float64,
 	senderSeed string, memo string) (int32, string, error) {
-	passphrase := xlm.Passphrase
 
 	sourceAccount, mykp, err := xlm.ReturnSourceAccount(senderSeed)
 	if err != nil {
@@ -151,13 +169,22 @@ func SendAsset(asset Asset, destination string, amountx float64,
 		Asset:       build.CreditAsset{asset.Code, asset.IssuerAddress},
 	}
 
-	tx := &build.Transaction{
-		SourceAccount: &sourceAccount,
-		Operations:    []build.Operation{&op},
-		Timebounds:    build.NewInfiniteTimeout(),
-		Network:       passphrase,
-		Memo:          build.Memo(build.MemoText(memo)),
-	}
+	tx, _ := build.NewTransaction(build.TransactionParams{
+		SourceAccount:        &sourceAccount,
+		Operations:           []build.Operation{&op},
+		Timebounds:           build.NewInfiniteTimeout(),
+		BaseFee:              build.MinBaseFee,
+		IncrementSequenceNum: true,
+		Memo:                 build.Memo(build.MemoText(memo)),
+	})
+
+	// tx := &build.Transaction{
+	// 	SourceAccount: &sourceAccount,
+	// 	Operations:    []build.Operation{&op},
+	// 	Timebounds:    build.NewInfiniteTimeout(),
+	// 	Network:       passphrase,
+	// 	Memo:          build.Memo(build.MemoText(memo)),
+	// }
 
 	return xlm.SendTx(mykp, tx)
 }

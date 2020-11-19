@@ -2,7 +2,7 @@ package xlm
 
 import (
 	"log"
-	"net/url"
+	//	"net/url"
 
 	"github.com/pkg/errors"
 
@@ -12,8 +12,7 @@ import (
 	horizonprotocol "github.com/stellar/go/protocols/horizon"
 	build "github.com/stellar/go/txnbuild"
 
-	b "github.com/stellar/go/build"
-
+	//b "github.com/stellar/go/build"
 	"github.com/stellar/go/xdr"
 )
 
@@ -59,18 +58,50 @@ func MergeAccount(sourceAcc string, loanAccSeed string, asset build.CreditAsset)
 		Destination:   loanAcc.AccountID,
 		SourceAccount: mergedAcc,
 	}
-
-	tx := &build.Transaction{
-		SourceAccount: &loanAcc,
-		Operations:    []build.Operation{op, op1},
-		Timebounds:    build.NewTimeout(180),
-		Network:       Passphrase,
-		Memo:          build.Memo(build.MemoText("")),
-	}
+	tx, err := build.NewTransaction(
+		build.TransactionParams{
+			SourceAccount:        &loanAcc,
+			Operations:           []build.Operation{op, op1},
+			Timebounds:           build.NewInfiniteTimeout(),
+			IncrementSequenceNum: true,
+			BaseFee:              build.MinBaseFee,
+			Memo:                 build.Memo(build.MemoText("merged account")),
+		})
 
 	return SendTx(mykp, tx)
 }
 
+func MergeAccountNormal(destAcc string, srcAccSeed string, asset build.CreditAsset) (int32, string, error) {
+
+	srcAcc, mykp, err := ReturnSourceAccount(srcAccSeed)
+	if err != nil {
+		return -1, "", errors.Wrap(err, "could not return source account")
+	}
+
+	srcAccSimple := &build.SimpleAccount{AccountID: srcAcc.AccountID}
+
+	op := &build.ChangeTrust{
+		Line:          asset,
+		Limit:         "0",
+		SourceAccount: srcAccSimple,
+	}
+
+	op1 := &build.AccountMerge{
+		Destination:   destAcc,
+		SourceAccount: srcAccSimple,
+	}
+	tx, err := build.NewTransaction(
+		build.TransactionParams{
+			SourceAccount:        &srcAcc,
+			Operations:           []build.Operation{op, op1},
+			Timebounds:           build.NewInfiniteTimeout(),
+			IncrementSequenceNum: true,
+			BaseFee:              build.MinBaseFee,
+			Memo:                 build.Memo(build.MemoText("merged account")),
+		})
+
+	return SendTx(mykp, tx)
+}
 func PayLoan(sourceAcc string, loanAccSeed string) (int32, string, error) {
 
 	loanAcc, mykp, err := ReturnSourceAccount(loanAccSeed)
@@ -96,277 +127,108 @@ func PayLoan(sourceAcc string, loanAccSeed string) (int32, string, error) {
 		Signer:          &build.Signer{Address: loanAcc.AccountID, Weight: build.Threshold(0)},
 		SourceAccount:   userAcc,
 	}
-
-	tx := &build.Transaction{
-		SourceAccount: &loanAcc,
-		Operations:    []build.Operation{op, op1},
-		Timebounds:    build.NewTimeout(180),
-		Network:       Passphrase,
-		Memo:          build.Memo(build.MemoText("")),
-	}
+	tx, err := build.NewTransaction(build.TransactionParams{
+		SourceAccount:        &loanAcc,
+		Operations:           []build.Operation{op, op1},
+		Timebounds:           build.NewInfiniteTimeout(),
+		IncrementSequenceNum: true,
+		BaseFee:              build.MinBaseFee,
+		Memo:                 build.Memo(build.MemoText("loan paid for GrayLL")),
+	})
 
 	return SendTx(mykp, tx)
 }
 
-// SendTx signs and broadcasts a given stellar tx
-func SendTx(mykp keypair.KP, tx *build.Transaction) (int32, string, error) {
+func ParseXDR(xdrData string) (xdr.TransactionEnvelope, error) {
 
-	txe, err := tx.BuildSignEncode(mykp.(*keypair.Full))
+	var txe xdr.TransactionEnvelope
+
+	txb, err := build.TransactionFromXDR(xdrData)
+	if err != nil {
+		return txe, err
+	}
+	tx, _ := txb.Transaction()
+
+	txe = tx.ToXDR()
+	return txe, nil
+}
+
+// ParseXDR parse xdr to transacation and check whether sourceAccount is valid
+// and then sign transaction with the signer key
+func ParseLoanXDR(xdrData, sourceAccount, secretKey, destPublickey string, amount float64) (string, error) {
+	//var e error
+
+	txcode := "tx_valid"
+
+	txb, err := build.TransactionFromXDR(xdrData)
+	if err != nil {
+		log.Println("ParseLoanXDR- TransactionFromXDR error ", err)
+		return "invalid public key", errors.New("Invalid public key")
+	}
+	tx, _ := txb.Transaction()
+
+	if tx.SourceAccount().AccountID != sourceAccount {
+		txcode = "tx_invalid_source_account"
+		return "invalid public key", errors.New("Invalid public key")
+	}
+
+	txe := tx.ToXDR()
+
+	if txe.Operations()[0].Body.PaymentOp.Amount != xdr.Int64(amount*float64(1000000)) {
+		txcode = "invalid_amount"
+		return txcode, errors.New("invalid amount")
+	}
+
+	if txe.Operations()[0].Body.PaymentOp.Destination.GoString() != destPublickey {
+		txcode = "invalid_dest_addr"
+		return txcode, errors.New("invalid destination address")
+	}
+
+	_, kp, err := ReturnSourceAccount(secretKey)
+
+	tx.Sign(Passphrase, kp)
+
+	_, err = HorizonClient.SubmitTransaction(tx)
+
+	return txcode, err
+
+}
+
+func newKeypair(seed string) *keypair.Full {
+	myKeypair, _ := keypair.Parse(seed)
+	return myKeypair.(*keypair.Full)
+}
+
+// SendTx signs and broadcasts a given stellar tx
+func SendTx(mykp *keypair.Full, tx *build.Transaction) (int32, string, error) {
+
+	var err error
+	tx, err = tx.Sign(Passphrase, mykp)
 
 	if err != nil {
 		return -1, "", errors.Wrap(err, "could not build/sign/encode")
 	}
-	log.Println("SendTx - xdr:", txe)
+	xdrString, _ := tx.Base64()
+	log.Println("SendTx - xdr:", xdrString)
 
-	resp, err := HorizonClient.SubmitTransactionXDR(txe)
+	resp, err := HorizonClient.SubmitTransactionXDR(xdrString)
 	if err != nil {
-		log.Println("SendTx - SubmitTransactionXDR err:", err)
+		log.Println("SendTx - SubmitTransactionXDR err:", err, resp.ResultXdr, resp.ResultMetaXdr)
 		return -1, "", errors.Wrap(err, "could not submit tx to horizon")
 	}
 
 	return resp.Ledger, resp.Hash, nil
 }
 
-// ParseXDR parse xdr to transacation and check whether sourceAccount is valid
-// and then sign transaction with the signer key
-func ParseXDR(xdr, sourceAccount, secretKey string) (txresp horizonprotocol.TransactionSuccess, e error, txcode string) {
-	//var e error
-
-	txcode = "tx_invalid"
-	txn := decodeFromBase64(xdr)
-	if txn.E.Tx.SourceAccount.Address() != sourceAccount {
-		txcode = "tx_invalid_source_account"
-		return txresp, errors.New("Invalid public key"), txcode
-	}
-
-	e = txn.MutateTX(
-		Network,
-	)
-	if e != nil {
-		log.Fatal(e)
-	}
-
-	// 5. sign the transaction envelope
-	e = txn.Mutate(&b.Sign{Seed: secretKey})
-	if e != nil {
-		log.Println(e)
-		return txresp, e, txcode
-	}
-
-	// 6. convert the transaction to base64
-	reencodedTxnBase64, e := txn.Base64()
-	if e != nil {
-		log.Println(e)
-		return txresp, e, txcode
-	}
-
-	//	log.Println("reencodedTxnBase64:", reencodedTxnBase64)
-
-	// 7. submit to the network
-	txresp, e = HorizonClient.SubmitTransactionXDR(reencodedTxnBase64)
-	if e != nil {
-		hError := e.(*horizon.Error)
-		code, err := hError.ResultCodes()
-		if err == nil {
-			txcode = code.TransactionCode
-			return txresp, e, txcode
-		} else {
-			log.Println("Error submitting transaction:", code.TransactionCode, code.OperationCodes)
-			return txresp, e, txcode
-		}
-	}
-	txcode = "tx_success"
-	return txresp, nil, txcode
-}
-
-// ParseXDR parse xdr to transacation and check whether sourceAccount is valid
-// and then sign transaction with the signer key
-func ParseLoanXDR(xdrData, sourceAccount, secretKey, destPublickey string, amount float64) (txresp horizonprotocol.TransactionSuccess, e error, txcode string) {
-	//var e error
-
-	txcode = "tx_invalid"
-	txn := decodeFromBase64(xdrData)
-	if txn.E.Tx.SourceAccount.Address() != sourceAccount {
-		txcode = "tx_invalid_source_account"
-		return txresp, errors.New("Invalid public key"), "invalid public key"
-	}
-
-	// Destination AccountId
-	// Asset       Asset
-	// Amount      Int64
-	txamount := int64(txn.E.Tx.Operations[0].Body.PaymentOp.Amount)
-	log.Println("txamount:", txamount)
-	if txamount < int64(amount*float64(1000000)) {
-		txcode = "invalid_amount"
-		return txresp, errors.New("invalid amount"), txcode
-	}
-
-	if len(txn.E.Tx.Operations) > 0 {
-		if txn.E.Tx.Operations[0].Body.PaymentOp.Destination.Address() != destPublickey {
-			txcode = "invalid_dest_addr"
-			return txresp, errors.New("invalid destination address"), txcode
-		}
-
-	} else {
-		txcode = "invalid_payment"
-		return txresp, errors.New("invalid payment"), txcode
-	}
-
-	e = txn.MutateTX(
-		Network,
-	)
-	if e != nil {
-		log.Fatal(e)
-	}
-
-	if e != nil {
-		log.Println(e)
-		return txresp, e, txcode
-	}
-	e = txn.Mutate(&b.Sign{Seed: secretKey})
-	if e != nil {
-		log.Println(e)
-		return txresp, e, txcode
-	}
-
-	// 6. convert the transaction to base64
-	reencodedTxnBase64, e := txn.Base64()
-	if e != nil {
-		log.Println(e)
-		return txresp, e, txcode
-	}
-
-	// 7. submit to the network
-	txresp, e = HorizonClient.SubmitTransactionXDR(reencodedTxnBase64)
-	if e != nil {
-		hError := e.(*horizon.Error)
-		code, err := hError.ResultCodes()
-		if err == nil {
-			txcode = code.TransactionCode
-			return txresp, e, txcode
-		} else {
-			log.Println("Error submitting transaction:", code.TransactionCode, code.OperationCodes)
-			return txresp, e, txcode
-		}
-	}
-	txcode = "tx_success"
-	return txresp, nil, txcode
-}
-
-// ParseXDR parse xdr to transacation and check whether sourceAccount is valid
-// and then sign transaction with the signer key
-func ParseLoanXDR1(xdrData, sourceAccount, secretKey, destPublickey string, amount float64) (txresp horizonprotocol.TransactionSuccess, e error, txcode string) {
-	//var e error
-
-	txcode = "tx_invalid"
-	txn := decodeFromBase64(xdrData)
-	if txn.E.Tx.SourceAccount.Address() != sourceAccount {
-		txcode = "tx_invalid_source_account"
-		return txresp, errors.New("Invalid public key"), "invalid public key"
-	}
-
-	// Destination AccountId
-	// Asset       Asset
-	// Amount      Int64
-	txamount := int64(txn.E.Tx.Operations[0].Body.PaymentOp.Amount)
-	log.Println("txamount:", txamount)
-	if txamount < int64(amount*float64(1000000)) {
-		txcode = "invalid_amount"
-		return txresp, errors.New("invalid amount"), txcode
-	}
-	//log.Println("txn.E.Tx.Operations:", txn.E.Tx.Operations)
-	//dest := txn.E.Tx.Operations[0].Body.PaymentOp.Destination
-	if len(txn.E.Tx.Operations) > 0 {
-		if txn.E.Tx.Operations[0].Body.PaymentOp.Destination.Address() != destPublickey {
-			txcode = "invalid_dest_addr"
-			return txresp, errors.New("invalid destination address"), txcode
-		}
-		// if txn.E.Tx.Operations[0].Body.SetOptionsOp.HighThreshold != xdr.Uint32{0} {
-		// 	txcode = "invalid_setops"
-		// 	return txresp, errors.New("invalid set ops"), txcode
-		// }
-		//log.Println("txn.E.Tx.Operations[1]:", txn.E.Tx.Operations[1])
-	} else {
-		txcode = "invalid_payment"
-		return txresp, errors.New("invalid payment"), txcode
-	}
-
-	e = txn.MutateTX(
-		Network,
-	)
-	if e != nil {
-		log.Fatal(e)
-	}
-
-	if e != nil {
-		log.Println(e)
-		return txresp, e, txcode
-	}
-	e = txn.Mutate(&b.Sign{Seed: secretKey})
-	if e != nil {
-		log.Println(e)
-		return txresp, e, txcode
-	}
-
-	// 6. convert the transaction to base64
-	reencodedTxnBase64, e := txn.Base64()
-	if e != nil {
-		log.Println(e)
-		return txresp, e, txcode
-	}
-
-	//	log.Println("reencodedTxnBase64:", reencodedTxnBase64)
-
-	// 7. submit to the network
-	txresp, e = HorizonClient.SubmitTransactionXDR(reencodedTxnBase64)
-	if e != nil {
-		hError := e.(*horizon.Error)
-		code, err := hError.ResultCodes()
-		if err == nil {
-			txcode = code.TransactionCode
-			return txresp, e, txcode
-		} else {
-			log.Println("Error submitting transaction:", code.TransactionCode, code.OperationCodes)
-			return txresp, e, txcode
-		}
-	}
-	txcode = "tx_success"
-	return txresp, nil, txcode
-}
-
-// unescape decodes the URL-encoded and base64 encoded txn
-func unescape(escaped string) string {
-	unescaped, e := url.QueryUnescape(escaped)
-	if e != nil {
-		log.Fatal(e)
-	}
-	return unescaped
-}
-
-// decodeFromBase64 decodes the transaction from a base64 string into a TransactionEnvelopeBuilder
-func decodeFromBase64(encodedXdr string) *b.TransactionEnvelopeBuilder {
-	// Unmarshall from base64 encoded XDR format
-	var decoded xdr.TransactionEnvelope
-	e := xdr.SafeUnmarshalBase64(encodedXdr, &decoded)
-	if e != nil {
-		log.Fatal(e)
-	}
-
-	// convert to TransactionEnvelopeBuilder
-	txEnvelopeBuilder := b.TransactionEnvelopeBuilder{E: &decoded}
-	txEnvelopeBuilder.Init()
-
-	return &txEnvelopeBuilder
-}
-
-// SendXLMCreateAccount creates and sends XLM to a new account
+//SendXLMCreateAccount creates and sends XLM to a new account
 func SendXLMCreateAccount(destination string, amountx float64, seed string) (int32, string, error) {
 	// don't check if the account exists or not, hopefully it does
 	sourceAccount, mykp, err := ReturnSourceAccount(seed)
 	if err != nil {
 		return -1, "", errors.Wrap(err, "could not get source account of seed")
 	}
-
+	//mykp := newKeypair(seed)
+	//sourceAccount := build.NewSimpleAccount(mykp.Address(), 0)
 	amount, err := utils.ToString(amountx)
 	if err != nil {
 		return -1, "", errors.Wrap(err, "could not convert amount to string")
@@ -377,32 +239,36 @@ func SendXLMCreateAccount(destination string, amountx float64, seed string) (int
 		Amount:      amount,
 	}
 
-	tx := &build.Transaction{
-		SourceAccount: &sourceAccount,
-		Operations:    []build.Operation{&op},
-		Timebounds:    build.NewInfiniteTimeout(),
-		Network:       Passphrase,
-	}
+	tx, err := build.NewTransaction(
+		build.TransactionParams{
+			SourceAccount:        &sourceAccount,
+			IncrementSequenceNum: true,
+			Operations:           []build.Operation{&op},
+			BaseFee:              build.MinBaseFee,
+			Timebounds:           build.NewInfiniteTimeout(),
+		},
+	)
 
 	return SendTx(mykp, tx)
 }
 
 // ReturnSourceAccount returns the source account of the seed
-func ReturnSourceAccount(seed string) (horizonprotocol.Account, keypair.KP, error) {
+func ReturnSourceAccount(seed string) (horizonprotocol.Account, *keypair.Full, error) {
 	var sourceAccount horizonprotocol.Account
 	mykp, err := keypair.Parse(seed)
 	if err != nil {
-		return sourceAccount, mykp, errors.Wrap(err, "could not parse keypair, quitting")
+		return sourceAccount, nil, errors.Wrap(err, "could not parse keypair, quitting")
 	}
+
 	client := getHorizonClient(IsMainNet)
 	ar := horizon.AccountRequest{AccountID: mykp.Address()}
 	sourceAccount, err = client.AccountDetail(ar)
 	if err != nil {
 		log.Println(err)
-		return sourceAccount, mykp, errors.Wrap(err, "could not load client details, quitting")
+		return sourceAccount, nil, errors.Wrap(err, "could not load client details, quitting")
 	}
 
-	return sourceAccount, mykp, nil
+	return sourceAccount, mykp.(*keypair.Full), nil
 }
 
 // ReturnSourceAccountPubkey returns the source account of the pubkey
@@ -436,14 +302,15 @@ func SendXLM(destination string, amountx float64, seed string, memo string) (int
 		Asset:         build.NativeAsset{},
 		SourceAccount: &sourceAccount,
 	}
+	tx, err := build.NewTransaction(build.TransactionParams{
+		SourceAccount:        &sourceAccount,
+		Operations:           []build.Operation{&op},
+		Timebounds:           build.NewInfiniteTimeout(),
+		BaseFee:              build.MinBaseFee,
+		IncrementSequenceNum: true,
+		Memo:                 build.Memo(build.MemoText(memo)),
+	})
 
-	tx := &build.Transaction{
-		SourceAccount: &sourceAccount,
-		Operations:    []build.Operation{&op},
-		Timebounds:    build.NewInfiniteTimeout(),
-		Network:       Passphrase,
-		Memo:          build.Memo(build.MemoText(memo)),
-	}
 	return SendTx(mykp, tx)
 }
 
@@ -467,13 +334,22 @@ func SendAsset(destination string, amountx float64, seed string, asset build.Ass
 		SourceAccount: &sourceAccount,
 	}
 
-	tx := &build.Transaction{
-		SourceAccount: &sourceAccount,
-		Operations:    []build.Operation{&op},
-		Timebounds:    build.NewInfiniteTimeout(),
-		Network:       Passphrase,
-		Memo:          build.Memo(build.MemoText(memo)),
-	}
+	// tx := &build.Transaction{
+	// 	SourceAccount: &sourceAccount,
+	// 	Operations:    []build.Operation{&op},
+	// 	Timebounds:    build.NewInfiniteTimeout(),
+	// 	Network:       Passphrase,
+	// 	Memo:          build.Memo(build.MemoText(memo)),
+	// }
+
+	tx, err := build.NewTransaction(build.TransactionParams{
+		SourceAccount:        &sourceAccount,
+		Operations:           []build.Operation{&op},
+		Timebounds:           build.NewInfiniteTimeout(),
+		BaseFee:              build.MinBaseFee,
+		IncrementSequenceNum: true,
+		Memo:                 build.Memo(build.MemoText(memo)),
+	})
 
 	return SendTx(mykp, tx)
 }
@@ -492,14 +368,20 @@ func RemoveSigner(sourceAcc string, loanAccSeed string) (int32, string, error) {
 	op := build.SetOptions{
 		Signer: &build.Signer{Address: loanAcc.GetAccountID(), Weight: build.Threshold(0)},
 	}
-
-	tx := &build.Transaction{
-		SourceAccount: &sourceAccount,
-		Operations:    []build.Operation{&op},
-		Timebounds:    build.NewTimeout(180),
-		Network:       Passphrase,
-		Memo:          build.Memo(build.MemoText("")),
-	}
+	tx, err := build.NewTransaction(build.TransactionParams{
+		SourceAccount:        &sourceAccount,
+		Operations:           []build.Operation{&op},
+		Timebounds:           build.NewInfiniteTimeout(),
+		IncrementSequenceNum: true,
+		Memo:                 build.Memo(build.MemoText("")),
+	})
+	// tx := &build.Transaction{
+	// 	SourceAccount: &loanAcc,
+	// 	Operations:    []txbuild.Operation{&op},
+	// 	Timebounds:    txbuild.NewInfiniteTimeout(),
+	// 	//Network:       Passphrase,
+	// 	Memo: build.Memo(txbuild.MemoText("")),
+	// }
 	//log.Println("Build tx")
 
 	return SendTx(mykp, tx)
@@ -513,33 +395,56 @@ func getHorizonClient(isMainNet bool) *horizon.Client {
 	}
 }
 
-// RefillAccount refills an account
-func RefillAccount(publicKey string, refillSeed string) error {
-	if IsMainNet {
-		return errors.New("can't give free xlm on mainnet, quitting")
-	}
-	var err error
-	if !AccountExists(publicKey) {
-		// there is no account under the user's name
-		// means we need to setup an account first
-		log.Println("Account does not exist, creating: ", publicKey)
-		_, _, err = SendXLMCreateAccount(publicKey, RefillAmount, refillSeed)
-		if err != nil {
-			log.Println("Account Could not be created")
-			return errors.Wrap(err, "Account Could not be created")
-		}
-	}
-	// balance is in string, convert to float
-	balance, err := GetNativeBalance(publicKey)
+func newSignedTransaction(
+	params build.TransactionParams,
+	network string,
+	keypairs ...*keypair.Full,
+) (string, error) {
+	tx, err := build.NewTransaction(params)
 	if err != nil {
-		return errors.Wrap(err, "could not get native balance")
+		return "", errors.Wrap(err, "couldn't create transaction")
 	}
-	balanceI, _ := utils.ToFloat(balance)
-	if balanceI < 3 { // to setup trustlines
-		_, _, err = SendXLM(publicKey, RefillAmount, refillSeed, "Sending XLM to refill")
-		if err != nil {
-			return errors.Wrap(err, "Account doesn't have funds or invalid seed")
-		}
+
+	tx, err = tx.Sign(network, keypairs...)
+	if err != nil {
+		return "", errors.Wrap(err, "couldn't sign transaction")
 	}
-	return nil
+
+	txeBase64, err := tx.Base64()
+	if err != nil {
+		return "", errors.Wrap(err, "couldn't encode transaction")
+	}
+
+	return txeBase64, err
 }
+
+// RefillAccount refills an account
+// func RefillAccount(publicKey string, refillSeed string) error {
+// 	if IsMainNet {
+// 		return errors.New("can't give free xlm on mainnet, quitting")
+// 	}
+// 	var err error
+// 	if !AccountExists(publicKey) {
+// 		// there is no account under the user's name
+// 		// means we need to setup an account first
+// 		log.Println("Account does not exist, creating: ", publicKey)
+// 		_, _, err = SendXLMCreateAccount(publicKey, RefillAmount, refillSeed)
+// 		if err != nil {
+// 			log.Println("Account Could not be created")
+// 			return errors.Wrap(err, "Account Could not be created")
+// 		}
+// 	}
+// 	// balance is in string, convert to float
+// 	balance, err := GetNativeBalance(publicKey)
+// 	if err != nil {
+// 		return errors.Wrap(err, "could not get native balance")
+// 	}
+// 	balanceI, _ := utils.ToFloat(balance)
+// 	if balanceI < 3 { // to setup trustlines
+// 		_, _, err = SendXLM(publicKey, RefillAmount, refillSeed, "Sending XLM to refill")
+// 		if err != nil {
+// 			return errors.Wrap(err, "Account doesn't have funds or invalid seed")
+// 		}
+// 	}
+// 	return nil
+// }

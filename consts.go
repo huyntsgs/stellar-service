@@ -4,7 +4,7 @@ import (
 	"log"
 	"net/http"
 
-	b "github.com/stellar/go/build"
+	//b "github.com/stellar/go/build"
 	horizon "github.com/stellar/go/clients/horizonclient"
 	"github.com/stellar/go/network"
 )
@@ -18,7 +18,7 @@ var (
 	IsMainNet bool
 	// TestNetClient defines the horizon client to connect to
 	HorizonClient *horizon.Client
-	Network       b.Network
+	//Network       network.PublicNetworkPassphrase
 	//Client horizonc.
 )
 
@@ -32,7 +32,7 @@ func GetHorizonClient() *horizon.Client {
 // SetConsts XLM consts
 func SetupParams(amount float64, isMainnet bool) {
 	RefillAmount = amount
-	IsMainNet = isMainnet	
+	IsMainNet = isMainnet
 	if IsMainNet {
 		Passphrase = network.PublicNetworkPassphrase
 		log.Println("Pointing horizon to mainnet")
@@ -40,7 +40,7 @@ func SetupParams(amount float64, isMainnet bool) {
 			HorizonURL: "https://horizon.stellar.org/",
 			HTTP:       http.DefaultClient,
 		}
-		Network = b.PublicNetwork
+		//Network = b.PublicNetwork
 	} else {
 		log.Println("Pointing horizon to testnet")
 		Passphrase = network.TestNetworkPassphrase
@@ -48,13 +48,13 @@ func SetupParams(amount float64, isMainnet bool) {
 			HorizonURL: "https://horizon-testnet.stellar.org/",
 			HTTP:       http.DefaultClient,
 		}
-		Network = b.TestNetwork
+		//Network = b.TestNetwork
 	}
 }
 func SetupParam(amount float64, isMainnet bool, horizonUrl string) {
 	RefillAmount = amount
 	IsMainNet = isMainnet
-	
+
 	if IsMainNet {
 		Passphrase = network.PublicNetworkPassphrase
 		log.Println("Pointing horizon to mainnet")
@@ -62,7 +62,7 @@ func SetupParam(amount float64, isMainnet bool, horizonUrl string) {
 			HorizonURL: horizonUrl,
 			HTTP:       http.DefaultClient,
 		}
-		Network = b.PublicNetwork
+		//Network = b.PublicNetwork
 	} else {
 		log.Println("Pointing horizon to testnet")
 		Passphrase = network.TestNetworkPassphrase
@@ -70,6 +70,6 @@ func SetupParam(amount float64, isMainnet bool, horizonUrl string) {
 			HorizonURL: "https://horizon-testnet.stellar.org/",
 			HTTP:       http.DefaultClient,
 		}
-		Network = b.TestNetwork
+		//Network = b.TestNetwork
 	}
 }

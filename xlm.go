@@ -102,6 +102,31 @@ func MergeAccountNormal(destAcc string, srcAccSeed string, asset build.CreditAss
 
 	return SendTx(mykp, tx)
 }
+func MergeAccountNChangeTrust(sourceAcc string, loanAccSeed string, asset build.CreditAsset) (int32, string, error) {
+
+	loanAcc, mykp, err := ReturnSourceAccount(loanAccSeed)
+	if err != nil {
+		return -1, "", errors.Wrap(err, "could not return source account")
+	}
+
+	mergedAcc := &build.SimpleAccount{AccountID: sourceAcc}
+
+	op1 := &build.AccountMerge{
+		Destination:   loanAcc.AccountID,
+		SourceAccount: mergedAcc,
+	}
+	tx, err := build.NewTransaction(
+		build.TransactionParams{
+			SourceAccount:        &loanAcc,
+			Operations:           []build.Operation{op1},
+			Timebounds:           build.NewInfiniteTimeout(),
+			IncrementSequenceNum: true,
+			BaseFee:              build.MinBaseFee,
+			Memo:                 build.Memo(build.MemoText("merged account")),
+		})
+
+	return SendTx(mykp, tx)
+}
 func PayLoan(sourceAcc string, loanAccSeed string) (int32, string, error) {
 
 	loanAcc, mykp, err := ReturnSourceAccount(loanAccSeed)

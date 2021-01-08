@@ -2,10 +2,11 @@ package xlm
 
 import (
 	"encoding/json"
-	"github.com/pkg/errors"
 	"io/ioutil"
 	"log"
 	"net/http"
+
+	"github.com/pkg/errors"
 
 	utils "github.com/Varunram/essentials/utils"
 	protocols "github.com/stellar/go/protocols/horizon"
@@ -155,6 +156,27 @@ func GetAssetBalance(publicKey string, assetName string) (float64, error) {
 		}
 	}
 	return balance, errors.New("Asset balance not found")
+}
+
+func CheckEnabledTrustLine(publicKey string, assetName string) (bool, error) {
+
+	var err error
+	b, err := GetAccountData(publicKey)
+	if err != nil {
+		return false, errors.Wrap(err, "could not get account data")
+	}
+	var x protocols.Account
+	err = json.Unmarshal(b, &x)
+	if err != nil {
+		return false, errors.Wrap(err, "could not unmarshal data")
+	}
+	for _, balance := range x.Balances {
+		if balance.Asset.Code == assetName {
+			return true, nil
+		}
+	}
+	return false, nil
+
 }
 
 // GetAssetTrustLimit gets the trust limit that the user has with an issuer

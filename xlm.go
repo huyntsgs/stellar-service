@@ -442,34 +442,3 @@ func newSignedTransaction(
 
 	return txeBase64, err
 }
-
-// RefillAccount refills an account
-// func RefillAccount(publicKey string, refillSeed string) error {
-// 	if IsMainNet {
-// 		return errors.New("can't give free xlm on mainnet, quitting")
-// 	}
-// 	var err error
-// 	if !AccountExists(publicKey) {
-// 		// there is no account under the user's name
-// 		// means we need to setup an account first
-// 		log.Println("Account does not exist, creating: ", publicKey)
-// 		_, _, err = SendXLMCreateAccount(publicKey, RefillAmount, refillSeed)
-// 		if err != nil {
-// 			log.Println("Account Could not be created")
-// 			return errors.Wrap(err, "Account Could not be created")
-// 		}
-// 	}
-// 	// balance is in string, convert to float
-// 	balance, err := GetNativeBalance(publicKey)
-// 	if err != nil {
-// 		return errors.Wrap(err, "could not get native balance")
-// 	}
-// 	balanceI, _ := utils.ToFloat(balance)
-// 	if balanceI < 3 { // to setup trustlines
-// 		_, _, err = SendXLM(publicKey, RefillAmount, refillSeed, "Sending XLM to refill")
-// 		if err != nil {
-// 			return errors.Wrap(err, "Account doesn't have funds or invalid seed")
-// 		}
-// 	}
-// 	return nil
-// }

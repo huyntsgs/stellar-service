@@ -113,7 +113,7 @@ func MergeAccountNormal(destAcc string, srcAccSeed string, asset build.CreditAss
 
 	return SendTx(mykp, tx)
 }
-func MergeAccountNChangeTrust(sourceAcc string, loanAccSeed string, asset build.CreditAsset) (int32, string, error) {
+func MergeAccountNChangeTrust(sourceAcc string, loanAccSeed string) (int32, string, error) {
 
 	loanAcc, mykp, err := ReturnSourceAccount(loanAccSeed)
 	if err != nil {

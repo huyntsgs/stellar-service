@@ -2,6 +2,7 @@ package xlm
 
 import (
 	"log"
+	//"log"
 	"testing"
 	// "github.com/stellar/go/network"
 	// build "github.com/stellar/go/txnbuild"
@@ -12,11 +13,11 @@ const (
 	SEED = "SB5NHUFNSALWQGLZZWVRGV5QX4MLIHT2LMLB3BW6TJMSNPDRVD4MDHW2"
 )
 
-func TestCreateAcc1(t *testing.T) {
-
-}
 func TestCreateAcc(t *testing.T) {
-	SetupParam(float64(1000), false, "https://horizon-testnet.stellar.org")
+	SetupParam(float64(1000), true, "https://horizon.stellar.org")
+
+	ret, _ := CheckEnabledTrustLineAsset("", "GRX")
+	log.Println(ret)
 	// seed, address, err := GetKeyPair()
 	// if err != nil {
 	// 	t.Fatal(err)
@@ -47,20 +48,21 @@ func TestCreateAcc(t *testing.T) {
 	// if err == nil {
 	// 	t.Fatalf("Wrong pubkey, shouldn't work!")
 	// }
-	_, destPubKey, err := GetKeyPair()
-	if err != nil {
-		t.Fatal(err)
-	}
-	log.Println(destPubKey)
-	_, _, err = SendXLMCreateAccount(destPubKey, 2, SEED)
-	// create the destinations account by sendignb some coins to bootstrap
-	if err != nil {
-		t.Fatal(err)
-	}
-	_, _, err = SendXLM(destPubKey, 2, SEED, "")
-	if err != nil {
-		t.Fatal(err)
-	}
+
+	// _, destPubKey, err := GetKeyPair()
+	// if err != nil {
+	// 	t.Fatal(err)
+	// }
+	// log.Println(destPubKey)
+	// _, _, err = SendXLMCreateAccount(destPubKey, 2, SEED)
+	// // create the destinations account by sendignb some coins to bootstrap
+	// if err != nil {
+	// 	t.Fatal(err)
+	// }
+	// _, _, err = SendXLM(destPubKey, 2, SEED, "")
+	// if err != nil {
+	// 	t.Fatal(err)
+	// }
 
 }
 

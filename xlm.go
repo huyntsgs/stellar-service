@@ -31,14 +31,25 @@ func GetKeyPair() (string, string, error) {
 // AccountExists checks whether an account exists
 func AccountExists(publicKey string) bool {
 	x, err := ReturnSourceAccountPubkey(publicKey)
-	log.Println("X=", x)
 	if err != nil {
 		// error in the horizon api call
 		return false
 	}
 	return x.Sequence != "0" // if the sequence is zero, the account doesn't exist yet. This equals to the ledger number at which the account was created
 }
-
+func CheckEnabledTrustLineAsset(publicKey, asset string) (bool, error) {
+	x, err := ReturnSourceAccountPubkey(publicKey)
+	if err != nil {
+		// error in the horizon api call
+		return false, err
+	}
+	for _, bl := range x.Balances {
+		if bl.Asset.Code == asset {
+			return true, nil
+		}
+	}
+	return false, nil
+}
 func MergeAccount(sourceAcc string, loanAccSeed string, asset build.CreditAsset) (int32, string, error) {
 
 	loanAcc, mykp, err := ReturnSourceAccount(loanAccSeed)

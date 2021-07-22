@@ -8,6 +8,10 @@ require (
 	github.com/YaleOpenLab/openx v0.0.0-20190920091857-0d6f70c5f50b
 	github.com/algorand/go-algorand-sdk v0.0.0-20190920183037-ac0ec33a405c // indirect
 	github.com/algorand/go-codec v1.1.7 // indirect
+	github.com/docker/distribution v2.7.1+incompatible // indirect
+	github.com/docker/docker v1.13.1 // indirect
+	github.com/docker/go-connections v0.4.0 // indirect
+	github.com/docker/go-units v0.4.0 // indirect
 	github.com/facebookgo/ensure v0.0.0-20160127193407-b4ab57deab51 // indirect
 	github.com/facebookgo/inject v0.0.0-20161006174721-cc1aa653e50f // indirect
 	github.com/facebookgo/stack v0.0.0-20160209184415-751773369052 // indirect
@@ -18,8 +22,10 @@ require (
 	github.com/gomodule/redigo v2.0.0+incompatible // indirect
 	github.com/ipfs/go-ipfs-api v0.0.2 // indirect
 	github.com/nullstyle/go-xdr v0.0.0-20180726165426-f4c839f75077 // indirect
+	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/pkg/errors v0.8.1
-	github.com/stellar/go v0.0.0-20200929180504-98db741b54f0
+	github.com/sebest/xff v0.0.0-20150611211316-7a36e3a787b5 // indirect
+	github.com/stellar/go v0.0.0-20210415113509-c8c12a14a16b
 	gopkg.in/airbrake/gobrake.v2 v2.0.9 // indirect
 	gopkg.in/gemnasium/logrus-airbrake-hook.v2 v2.1.2 // indirect
 //github.com/stellar/go v0.0.0-20200929180504-98db741b54f0

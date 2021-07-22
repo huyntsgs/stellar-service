@@ -1,7 +1,7 @@
 package xlm
 
 import (
-	"log"
+	//"log"
 	//"log"
 	"testing"
 	// "github.com/stellar/go/network"
@@ -9,15 +9,25 @@ import (
 )
 
 const (
-	ACC  = "GCZU65Q6S34J2WSWKXASAFDRC52GSMUYP2JHPU54C3WGLG6AAL6RWTHB"
-	SEED = "SB5NHUFNSALWQGLZZWVRGV5QX4MLIHT2LMLB3BW6TJMSNPDRVD4MDHW2"
+	ACC  = "GBPV7LIK55TLLONLWTVJPM63GWEE2U2UHKLQLJCAESCENARYIOMBFVET"
+	SEED = ""
 )
 
 func TestCreateAcc(t *testing.T) {
 	SetupParam(float64(1000), true, "https://horizon.stellar.org")
+	// _, _, err := MergeAccountNChangeTrust("GBHCQ7D24IKGQWUUA2LHFDBUL6G56A2XIQGGNACJRFF4S5USBPUIM6A7", "SATORSIMUQSQRV6H2TJRE7DO5YLES36JUHBGNQENSLXOAVBGHVI7K64B")
+	SendAsset("GBPV7LIK55TLLONLWTVJPM63GWEE2U2UHKLQLJCAESCENARYIOMBFVET")
 
-	ret, _ := CheckEnabledTrustLineAsset("", "GRX")
-	log.Println(ret)
+	_, _, err := SendAsset("GBPV7LIK55TLLONLWTVJPM63GWEE2U2UHKLQLJCAESCENARYIOMBFVET", 43, SEED, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// if err != nil {
+	// 	log.Println("MergeAccountNChangeTrust", err)
+	// }
+	//ret, _ := CheckEnabledTrustLineAsset("GA34DJMC3QH2CKRPTMXTBO3EZDCYSRGUAZ3XT6QOO53VOWD4AYYSDTHY", "GRX")
+	//log.Println(ret)
 	// seed, address, err := GetKeyPair()
 	// if err != nil {
 	// 	t.Fatal(err)
@@ -101,10 +111,10 @@ func TestCreateAcc(t *testing.T) {
 // 	if err != nil {
 // 		t.Fatal(err)
 // 	}
-// 	_, _, err = SendXLM(destPubKey, 1, seed, "")
-// 	if err != nil {
-// 		t.Fatal(err)
-// 	}
+// _, _, err = SendXLM("GBPV7LIK55TLLONLWTVJPM63GWEE2U2UHKLQLJCAESCENARYIOMBFVET", 1, seed, "")
+// if err != nil {
+// 	t.Fatal(err)
+// }
 // 	_, _, err = SendXLM(destPubKey, 1, "wrong seed", "")
 // 	if err == nil {
 // 		t.Fatalf("Wrong seed, shouldn't work!")

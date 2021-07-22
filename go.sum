@@ -244,10 +244,14 @@ github.com/stellar/go v0.0.0-20190920224012-d72ea298f1e9/go.mod h1:U4zGmzxsNw5Kr
 github.com/stellar/go v0.0.0-20200929180504-98db741b54f0 h1:qCWCfZyYs3Jb4arVkrWok0ePssTql5UEmNlL2gDvXRk=
 github.com/stellar/go v0.0.0-20200929180504-98db741b54f0/go.mod h1:detHj8OVJH7sNNGahphTD9kMofOxMKAURZuRq9mHwGM=
 github.com/stellar/go v0.0.0-20201105222001-38aec89b398a h1:kc+CXi9vYrxdUm++zoQfIDJL5LxuyhYgZs5Ju0xJW9s=
+github.com/stellar/go v0.0.0-20210415113509-c8c12a14a16b h1:/W+PEI9h58P6ORH0icRYX3H+JS5GzAawx+fvbmJv/OQ=
+github.com/stellar/go v0.0.0-20210415113509-c8c12a14a16b/go.mod h1:m5Azd56FGZT/mnjlZE9i68+nxm/6b6YOg0kP99aBDi4=
 github.com/stellar/go-xdr v0.0.0-20180917104419-0bc96f33a18e h1:n/hfey8pO+RYMoGXyvyzuw5pdO8IFDoyAL/g5OiCesY=
 github.com/stellar/go-xdr v0.0.0-20180917104419-0bc96f33a18e/go.mod h1:gpOLVzy6TVYTQ3LvHSN9RJC700FkhFCpSE82u37aNRM=
 github.com/stellar/go-xdr v0.0.0-20200331223602-71a1e6d555f2 h1:K9H+A+eWe8ZlnpNha+pXbEK+jtIluQp/2dKxkK8k7OE=
 github.com/stellar/go-xdr v0.0.0-20200331223602-71a1e6d555f2/go.mod h1:yoxyU/M8nl9LKeWIoBrbDPQ7Cy+4jxRcWcOayZ4BMps=
+github.com/stellar/go-xdr v0.0.0-20201028102745-f80a23dac78a h1:GnM0ArRp7EDbaTiFhSp/CLgyk2cacXxdUklqJmdJs1Q=
+github.com/stellar/go-xdr v0.0.0-20201028102745-f80a23dac78a/go.mod h1:yoxyU/M8nl9LKeWIoBrbDPQ7Cy+4jxRcWcOayZ4BMps=
 github.com/stellar/throttled v2.2.3-0.20190823235211-89d75816f59d+incompatible/go.mod h1:7CJ23pXirXBJq45DqvO6clzTEGM/l1SfKrgrzLry8b4=
 github.com/stretchr/objx v0.1.0 h1:4G4v2dO3VZwixGIRoQ5Lfboy6nUhCyYzaqnIAPPhYs4=
 github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
@@ -265,6 +269,7 @@ github.com/valyala/fasthttp v0.0.0-20170109085056-0a7f0a797cd6 h1:s0IDmR1jFyWvOK
 github.com/valyala/fasthttp v0.0.0-20170109085056-0a7f0a797cd6/go.mod h1:+g/po7GqyG5E+1CNgquiIxJnsXEi5vwFn5weFujbO78=
 github.com/whyrusleeping/tar-utils v0.0.0-20180509141711-8c6c8ba81d5c h1:GGsyl0dZ2jJgVT+VvWBf/cNijrHRhkrTjkmp5wg7li0=
 github.com/whyrusleeping/tar-utils v0.0.0-20180509141711-8c6c8ba81d5c/go.mod h1:xxcJeBb7SIUl/Wzkz1eVKJE/CB34YNrqX2TQI6jY9zs=
+github.com/xdrpp/goxdr v0.1.0/go.mod h1:sIkGTrelHHneJXYd+dJGuziv4dWDofbdMl+onW+E3x8=
 github.com/xeipuuv/gojsonpointer v0.0.0-20151027082146-e0fe6f683076 h1:KM4T3G70MiR+JtqplcYkNVoNz7pDwYaBxWBXQK804So=
 github.com/xeipuuv/gojsonpointer v0.0.0-20151027082146-e0fe6f683076/go.mod h1:N2zxlSyiKSe5eX1tZViRH5QA0qijqEDrYZiPEAiq3wU=
 github.com/xeipuuv/gojsonreference v0.0.0-20150808065054-e02fc20de94c h1:XZWnr3bsDQWAZg4Ne+cPoXRPILrNlPNQfxBuwLl43is=

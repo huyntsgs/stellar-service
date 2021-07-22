@@ -57,17 +57,17 @@ func MergeAccount(sourceAcc string, loanAccSeed string, asset build.CreditAsset)
 		return -1, "", errors.Wrap(err, "could not return source account")
 	}
 
-	mergedAcc := &build.SimpleAccount{AccountID: sourceAcc}
+	//mergedAcc := &build.SimpleAccount{AccountID: sourceAcc}
 
 	op := &build.ChangeTrust{
 		Line:          asset,
 		Limit:         "0",
-		SourceAccount: mergedAcc,
+		SourceAccount: sourceAcc,
 	}
 
 	op1 := &build.AccountMerge{
 		Destination:   loanAcc.AccountID,
-		SourceAccount: mergedAcc,
+		SourceAccount: sourceAcc,
 	}
 	tx, err := build.NewTransaction(
 		build.TransactionParams{
@@ -89,17 +89,17 @@ func MergeAccountNormal(destAcc string, srcAccSeed string, asset build.CreditAss
 		return -1, "", errors.Wrap(err, "could not return source account")
 	}
 
-	srcAccSimple := &build.SimpleAccount{AccountID: srcAcc.AccountID}
+	//srcAccSimple := &build.SimpleAccount{AccountID: srcAcc.AccountID}
 
 	op := &build.ChangeTrust{
 		Line:          asset,
 		Limit:         "0",
-		SourceAccount: srcAccSimple,
+		SourceAccount: srcAcc.AccountID,
 	}
 
 	op1 := &build.AccountMerge{
 		Destination:   destAcc,
-		SourceAccount: srcAccSimple,
+		SourceAccount: srcAcc.AccountID,
 	}
 	tx, err := build.NewTransaction(
 		build.TransactionParams{
@@ -120,11 +120,11 @@ func MergeAccountNChangeTrust(sourceAcc string, loanAccSeed string) (int32, stri
 		return -1, "", errors.Wrap(err, "could not return source account")
 	}
 
-	mergedAcc := &build.SimpleAccount{AccountID: sourceAcc}
+	//mergedAcc := &build.SimpleAccount{AccountID: sourceAcc}
 
 	op1 := &build.AccountMerge{
 		Destination:   loanAcc.AccountID,
-		SourceAccount: mergedAcc,
+		SourceAccount: sourceAcc,
 	}
 	tx, err := build.NewTransaction(
 		build.TransactionParams{
@@ -145,14 +145,14 @@ func PayLoan(sourceAcc string, loanAccSeed string) (int32, string, error) {
 		return -1, "", errors.Wrap(err, "could not return source account")
 	}
 
-	userAcc := &build.SimpleAccount{AccountID: sourceAcc}
+	//userAcc := &build.SimpleAccount{AccountID: sourceAcc}
 
 	// Pay loan
 	op := &build.Payment{
 		Destination:   loanAcc.AccountID,
 		Amount:        "2.1",
 		Asset:         build.NativeAsset{},
-		SourceAccount: userAcc,
+		SourceAccount: sourceAcc,
 	}
 	// set threshold, remove signer
 	h := build.Threshold(0)
@@ -161,7 +161,7 @@ func PayLoan(sourceAcc string, loanAccSeed string) (int32, string, error) {
 		HighThreshold:   &h,
 		MediumThreshold: &m,
 		Signer:          &build.Signer{Address: loanAcc.AccountID, Weight: build.Threshold(0)},
-		SourceAccount:   userAcc,
+		SourceAccount:   sourceAcc,
 	}
 	tx, err := build.NewTransaction(build.TransactionParams{
 		SourceAccount:        &loanAcc,
@@ -336,7 +336,7 @@ func SendXLM(destination string, amountx float64, seed string, memo string) (int
 		Destination:   destination,
 		Amount:        amount,
 		Asset:         build.NativeAsset{},
-		SourceAccount: &sourceAccount,
+		SourceAccount: sourceAccount.AccountID,
 	}
 	tx, err := build.NewTransaction(build.TransactionParams{
 		SourceAccount:        &sourceAccount,
@@ -367,7 +367,7 @@ func SendAsset(destination string, amountx float64, seed string, asset build.Ass
 		Destination:   destination,
 		Amount:        amount,
 		Asset:         asset,
-		SourceAccount: &sourceAccount,
+		SourceAccount: sourceAccount.AccountID,
 	}
 
 	// tx := &build.Transaction{
